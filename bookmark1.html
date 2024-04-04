@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmark App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .bookmark-btn {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .modal,
+        .bookmarks-modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content,
+        .bookmarks-modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 5px;
+        }
+
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input[type=text],
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 20px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .save-btn,
+        .view-bookmarks-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            margin: 8px 8px 8px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .save-btn:hover,
+        .view-bookmarks-btn:hover {
+            background-color: #45a049;
+        }
+
+        .bookmarks-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .bookmarks-list li {
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="bookmarkBtn" class="bookmark-btn">Bookmark</button>
+
+    <div id="bookmarkModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Add Bookmark</h2>
+            <form id="bookmarkForm">
+                <div class="form-group">
+                    <label for="bookmarkName">Bookmark Name:</label>
+                    <input type="text" id="bookmarkName" name="bookmarkName" required>
+                </div>
+                <div class="form-group">
+                    <label for="client">Client:</label>
+                    <select id="client" name="client" multiple>
+                        <option value="Client A">Client A</option>
+                        <option value="Client B">Client B</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="product">Product:</label>
+                    <select id="product" name="product" multiple>
+                        <option value="Product A">Product A</option>
+                        <option value="Product B">Product B</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="clientSegment">Client Segment:</label>
+                    <select id="clientSegment" name="clientSegment" multiple>
+                        <option value="Segment A">Segment A</option>
+                        <option value="Segment B">Segment B</option>
+                    </select>
+                </div>
+                <button type="submit" class="save-btn">Save</button>
+                <button type="button" class="view-bookmarks-btn" onclick="viewSavedBookmarks()">Saved Bookmarks</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="bookmarksModal" class="bookmarks-modal">
+        <div class="bookmarks-modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Saved Bookmarks</h2>
+            <ul id="bookmarksList" class="bookmarks-list">
+                <!-- Dynamically filled with bookmarks -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('bookmarkBtn').addEventListener('click', function () {
+            document.getElementById('bookmarkModal').style.display = 'block';
+        });
+
+        document.querySelectorAll('.close-button').forEach(button => {
+            button.addEventListener('click', function () {
+                this.parentElement.parentElement.style.display = 'none';
+            });
+        });
+
+        document.getElementById('bookmarkForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const bookmarkName = document.getElementById('bookmarkName').value;
+            const client = Array.from(document.getElementById('client').selectedOptions).map(option => option.value);
+            const product = Array.from(document.getElementById('product').selectedOptions).map(option => option.value);
+            const clientSegment = Array.from(document.getElementById('clientSegment').selectedOptions).map(option => option.value);
+
+            const bookmark = { bookmarkName, client, product, clientSegment };
+
+            saveBookmark(bookmark);
+
+            document.getElementById('bookmarkModal').style.display = 'none';
+        });
+
+        function saveBookmark(bookmark) {
+            let bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [];
+            bookmarks.push(bookmark);
+            localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+            alert('Bookmark saved successfully!');
+        }
+
+        function viewSavedBookmarks() {
+            displaySavedBookmarks();
+            document.getElementById('bookmarksModal').style.display = 'block';
+        }
+
+        function displaySavedBookmarks() {
+            const bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [];
+            const listElement = document.getElementById('bookmarksList');
+            listElement.innerHTML = ''; // Clear existing bookmarks
+
+            bookmarks.forEach((bookmark, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+      <strong>${bookmark.bookmarkName}</strong>
+      <p>Clients: ${bookmark.client.join(', ')}</p>
+      <p>Products: ${bookmark.product.join(', ')}</p>
+      <p>Client Segments: ${bookmark.clientSegment.join(', ')}</p>
+      <button onclick="editBookmark(${index})">Edit</button>
+    `;
+                listElement.appendChild(li);
+            });
+        }
+
+        function editBookmark(index) {
+            const bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [];
+            if (index >= 0 && index < bookmarks.length) {
+                const bookmark = bookmarks[index];
+                document.getElementById('bookmarkName').value = bookmark.bookmarkName;
+                setSelectedOptions('client', bookmark.client);
+                setSelectedOptions('product', bookmark.product);
+                setSelectedOptions('clientSegment', bookmark.clientSegment);
+
+                bookmarks.splice(index, 1); // Remove the bookmark being edited
+                localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+                document.getElementById('bookmarksModal').style.display = 'none';
+                document.getElementById('bookmarkModal').style.display = 'block';
+            }
+        }
+
+        function setSelectedOptions(selectId, values) {
+            const select = document.getElementById(selectId);
+            Array.from(select.options).forEach(option => {
+                option.selected = values.includes(option.value);
+            });
+        }
+    </script>
+</body>
+
+</html>
