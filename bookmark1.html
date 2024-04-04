@@ -235,6 +235,38 @@
                 option.selected = values.includes(option.value);
             });
         }
+
+        function toggleDropdown(dropdownId) {
+  var select = document.getElementById(dropdownId);
+  if (select.classList.contains('expanded')) {
+    select.classList.remove('expanded');
+  } else {
+    select.classList.add('expanded');
+    // Close dropdown when clicked outside
+    document.addEventListener('click', function(event) {
+      closeDropdownOnOutsideClick(event, dropdownId);
+    });
+  }
+}
+
+function closeDropdownOnOutsideClick(event, dropdownId) {
+  var select = document.getElementById(dropdownId);
+  var header = select.previousElementSibling;
+  if (!header.contains(event.target)) {
+    select.classList.remove('expanded');
+    document.removeEventListener('click', function(evt) {
+      closeDropdownOnOutsideClick(evt, dropdownId);
+    });
+  }
+}
+
+['client', 'product', 'clientSegment'].forEach(function(dropdownId) {
+  document.getElementById(dropdownId).addEventListener('change', function() {
+    var label = document.getElementById(dropdownId + 'Label');
+    var selectedValues = Array.from(this.selectedOptions).map(option => option.text).join(', ');
+    label.textContent = selectedValues || 'Select ' + dropdownId.charAt(0).toUpperCase() + dropdownId.slice(1);
+  });
+});
     </script>
 </body>
 
