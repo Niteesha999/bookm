@@ -122,26 +122,49 @@
                     <input type="text" id="bookmarkName" name="bookmarkName" required>
                 </div>
                 <div class="form-group">
-                    <label for="client">Client:</label>
-                    <select id="client" name="client" multiple>
-                        <option value="Client A">Client A</option>
-                        <option value="Client B">Client B</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="product">Product:</label>
-                    <select id="product" name="product" multiple>
-                        <option value="Product A">Product A</option>
-                        <option value="Product B">Product B</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="clientSegment">Client Segment:</label>
-                    <select id="clientSegment" name="clientSegment" multiple>
-                        <option value="Segment A">Segment A</option>
-                        <option value="Segment B">Segment B</option>
-                    </select>
-                </div>
+  <label>Client:</label>
+  <div class="dropdown">
+    <div class="dropdown-header" onclick="toggleDropdown('client')">
+      <span id="clientLabel">Select Clients</span>
+      <span class="dropdown-arrow">&#9660;</span>
+    </div>
+    <select id="client" multiple class="dropdown-select">
+      <option value="Client A">Client A</option>
+      <option value="Client B">Client B</option>
+      <!-- Add more client options here -->
+    </select>
+  </div>
+</div>
+
+<div class="form-group">
+  <label>Product:</label>
+  <div class="dropdown">
+    <div class="dropdown-header" onclick="toggleDropdown('product')">
+      <span id="productLabel">Select Products</span>
+      <span class="dropdown-arrow">&#9660;</span>
+    </div>
+    <select id="product" multiple class="dropdown-select">
+      <option value="Product A">Product A</option>
+      <option value="Product B">Product B</option>
+      <!-- Add more product options here -->
+    </select>
+  </div>
+</div>
+
+<div class="form-group">
+  <label>Client Segment:</label>
+  <div class="dropdown">
+    <div class="dropdown-header" onclick="toggleDropdown('clientSegment')">
+      <span id="clientSegmentLabel">Select Client Segments</span>
+      <span class="dropdown-arrow">&#9660;</span>
+    </div>
+    <select id="clientSegment" multiple class="dropdown-select">
+      <option value="Segment A">Segment A</option>
+      <option value="Segment B">Segment B</option>
+      <!-- Add more segment options here -->
+    </select>
+  </div>
+</div>
                 <button type="submit" class="save-btn">Save</button>
                 <button type="button" class="view-bookmarks-btn" onclick="viewSavedBookmarks()">Saved Bookmarks</button>
             </form>
