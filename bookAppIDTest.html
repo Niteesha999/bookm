@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmark App</title>
+    <style>
+        .bookmark-btn,
+        .view-bookmarks-btn {
+            background-color: #335A9E;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .delete-btn {
+            background-color: #ff6347;
+            color: white;
+            padding: 5px 10px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background-color: #ff2e00;
+        }
+
+        .modal,
+        .bookmarks-modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content,
+        .bookmarks-modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 5px;
+        }
+
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close-button:hover,
+        .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group input[type=text] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 20px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .save-btn,
+        .view-bookmarks-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            margin: 8px 8px 8px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .save-btn:hover,
+        .view-bookmarks-btn:hover {
+            background-color: #45a049;
+        }
+
+        .bookmarks-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .bookmarks-list li {
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <button id="bookmarkBtn" class="bookmark-btn" style="float: right;">Bookmark</button>
+
+    <div id="bookmarkModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Add Bookmark</h2>
+            <form id="bookmarkForm">
+                <div class="form-group">
+                    <label for="bookmarkName">Bookmark Name:</label>
+                    <input type="text" id="bookmarkName" name="bookmarkName" required>
+                </div>
+                <div class="form-group">
+                    <label for="client">Client:</label>
+                    <select id="client" name="client">
+                        <!-- Options will be populated here -->
+                    </select>
+                </div>
+                <!-- Additional fields like 'Product' and 'Client Segment' remain the same -->
+                <button type="submit" class="save-btn">Save</button>
+                <button type="button" class="view-bookmarks-btn" onclick="viewSavedBookmarks()">Saved Bookmarks</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="bookmarksModal" class="bookmarks-modal">
+        <div class="bookmarks-modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Saved Bookmarks</h2>
+            <ul id="bookmarksList" class="bookmarks-list">
+                <!-- Dynamically filled with bookmarks -->
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('bookmarkBtn').addEventListener('click', function () {
+            document.getElementById('bookmarkModal').style.display = 'block';
+            populateClientsDropdown(); // Populate clients dropdown on button click
+        });
+
+        document.querySelectorAll('.close-button').forEach(button => {
+            button.addEventListener('click', function () {
+                this.parentElement.parentElement.style.display = 'none';
+            });
+        });
+
+        document.getElementById('bookmarkForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const bookmarkName = document.getElementById('bookmarkName').value;
+            const client = document.getElementById('client').value;
+            // Assume handling for 'product' and 'clientSegment' is similar and omitted for brevity
+            const bookmark = { bookmarkName, client };
+            saveBookmark(bookmark);
+            document.getElementById('bookmarkModal').style.display = 'none';
+        });
+
+        function saveBookmark(bookmark) {
+            let bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [];
+            bookmarks.push(bookmark);
+            localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+            alert('Bookmark saved successfully!');
+        }
+
+        function viewSavedBookmarks() {
+            const bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [];
+            const listElement = document.getElementById('bookmarksList');
+            listElement.innerHTML = bookmarks.map((bookmark, index) => `
+            <li>
+                <strong>${bookmark.bookmarkName}</strong> - Client: ${bookmark.client}
+                <button class="delete-btn" onclick="deleteBookmark(${index})">Delete</button>
+            </li>
+        `).join('');
+            document.getElementById('bookmarksModal').style.display = 'block';
+        }
+
+        function deleteBookmark(index) {
+            let bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [];
+            bookmarks.splice(index, 1);
+            localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+            viewSavedBookmarks(); // Refresh the list
+        }
+
+        function populateClientsDropdown() {
+                const appId = "YOUR_REAL_APP_ID"; // Replace with your actual App ID
+                const fieldName = "YOUR_REAL_FIELD_NAME"; // Replace with your actual Fieldname
+
+                // Example URL structure for Qlik Sense Engine API or Capabilities API
+                // This is a simplified example. Your actual API URL and parameters might differ.
+                const url = `https://your-qlik-sense-server.com/apps/${appId}/data/fields/${fieldName}`;
+
+                // Fetch data from Qlik Sense
+                // Note: This example assumes you have a way to handle CORS and authentication.
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Include headers for authentication if required
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        // Assuming 'data' contains the list of clients. This will depend on the API's response structure.
+                        const clients = data.values; // Adjust this line based on the actual structure of response
+                        const clientDropdown = document.getElementById('client');
+                        clientDropdown.innerHTML = ''; // Clear existing options
+
+                        clients.forEach(client => {
+                            const option = document.createElement('option');
+                            option.value = option.textContent = client; // Adjust based on the response structure
+                            clientDropdown.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching client data:', error));
+            }
+
+
+        // Placeholder: Replace this with your actual code to fetch data from Qlik Sense
+    </script>
+
+</body>
+
+</html>
