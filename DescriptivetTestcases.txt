@@ -1,0 +1,72 @@
+Test Case Specification Format
+Test Case ID: Unique identifier for the test case.
+Title: Brief description of what the test case will validate.
+Objective: Detailed description of the test case purpose.
+Preconditions: Any conditions that must be met before executing the test.
+Test Steps: Step-by-step instructions on how to perform the test.
+Expected Results: Expected outcome of the test.
+Actual Results: Space to record the actual result during testing.
+Status: Pass or Fail based on whether the expected result matches the actual result.
+Notes: Any additional observations or issues encountered during the test.
+Test Cases
+TC01: Add a New Bookmark
+Objective: Verify that a user can add a new bookmark successfully.
+Preconditions: The user is on the main page with the bookmark modal accessible.
+Test Steps:
+Click the "Bookmark" button to open the bookmark modal.
+Enter a unique name in the "Bookmark Name" field.
+Select any available options from the "Client", "Product", and "Client Segment" dropdowns.
+Click the "Save" button.
+Expected Results: The bookmark is added to the local storage and is visible under "Saved Bookmarks".
+Status: To be filled after execution.
+TC02: Edit an Existing Bookmark
+Objective: Verify that a user can edit an existing bookmark and changes are saved correctly.
+Preconditions: At least one bookmark exists.
+Test Steps:
+Open the "Saved Bookmarks" modal.
+Click the "Edit" button on any existing bookmark.
+Change the name and selections in any of the dropdowns.
+Click the "Save" button.
+Expected Results: The changes are reflected immediately in the bookmarks list, and the updated data matches the edits made.
+Status: To be filled after execution.
+TC03: Delete an Existing Bookmark
+Objective: Verify that a user can delete an existing bookmark.
+Preconditions: At least one bookmark exists.
+Test Steps:
+Open the "Saved Bookmarks" modal.
+Click the "Delete" button on any existing bookmark.
+Expected Results: The bookmark is removed from the list and local storage.
+Status: To be filled after execution.
+TC04: Validate Form Reset Functionality
+Objective: Ensure that the "Reset" button clears all form fields and selections.
+Preconditions: Bookmark modal is open.
+Test Steps:
+Open the bookmark modal and fill out all fields with data.
+Click the "Reset" button.
+Expected Results: All form fields and selections are cleared.
+Status: To be filled after execution.
+TC05: Persistence of Bookmarks Across Sessions
+Objective: Verify that bookmarks are persisted across browser sessions.
+Preconditions: At least one bookmark has been created in a previous session.
+Test Steps:
+Close the browser window and reopen it.
+Open the "Saved Bookmarks" modal.
+Expected Results: Previously saved bookmarks are still present.
+Status: To be filled after execution.
+TC06: Check Error Handling for Duplicate Bookmark Names
+Objective: Verify that the application handles duplicate bookmark names gracefully.
+Preconditions: At least one bookmark exists.
+Test Steps:
+Click the "Bookmark" button to open the bookmark modal.
+Enter a name that already exists.
+Try to save the bookmark.
+Expected Results: The application prevents saving and displays an appropriate error message.
+Status: To be filled after execution.
+TC07: Validation of Dropdown Data Load
+Objective: Ensure that dropdowns for Client, Product, and Client Segment are populated correctly using data from Qlik.
+Preconditions: The user is on the main page where dropdowns should be populated.
+Test Steps:
+Verify that each dropdown is populated with data as soon as the page loads.
+Expected Results: Each dropdown contains data loaded from the Qlik application.
+Status: To be filled after execution.
+
