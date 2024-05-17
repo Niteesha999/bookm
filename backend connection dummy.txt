@@ -1,0 +1,92 @@
+Connection code-
+
+const sql = require('mssql');
+
+const config = {
+    user: 'username',
+    password: 'password',
+    server: 'localhost', // You can use 'localhost\\instance' if you have a named instance
+    database: 'YourDatabaseName',
+    options: {
+        encrypt: true, // If on Azure
+        enableArithAbort: true
+    }
+};
+
+sql.connect(config).then(pool => {
+    if(pool.connecting) {
+        console.log('Connecting to the SQL Server...');
+    }
+    if(pool.connected) {
+        console.log('Connected to SQL Server successfully!');
+    }
+}).catch(e => {
+    console.error('Failed to connect to SQL Server:', e);
+});
+
+
+
+
+Defining APIs-
+
+const express = require('express');
+const app = express();
+app.use(express.json()); // Middleware to parse JSON bodies
+
+// Route to add a new bookmark
+app.post('/bookmarks', async (req, res) => {
+    try {
+        const { userID, bookmarkName, attributeNames, attributeValues, createdBy } = req.body;
+        const result = await sql.query`
+            INSERT INTO Bookmarks (UserID, BookmarkName, AttributeName, AttributeValue, DeletedIndicator, CreatedOn, CreatedBy, UpdatedOn, UpdatedBy)
+            VALUES (${userID}, ${bookmarkName}, ${attributeNames.join(', ')}, ${attributeValues.join(', ')}, 0, GETDATE(), ${createdBy}, NULL, NULL)
+        `;
+        res.status(201).send({ message: 'Bookmark created successfully!', result: result.recordset });
+    } catch (error) {
+        console.error('Failed to add new bookmark:', error);
+        res.status(500).send({ message: 'Failed to add new bookmark', error });
+    }
+});
+
+// Route to update an existing bookmark
+app.put('/bookmarks/:id', async (req, res) => {
+    try {
+        const { bookmarkName, attributeNames, attributeValues, updatedBy } = req.body;
+        const { id } = req.params;
+        const result = await sql.query`
+            UPDATE Bookmarks SET
+                BookmarkName = ${bookmarkName},
+                AttributeName = ${attributeNames.join(', ')},
+                AttributeValue = ${attributeValues.join(', ')},
+                UpdatedOn = GETDATE(),
+                UpdatedBy = ${updatedBy}
+            WHERE AutoNo = ${id}
+        `;
+        res.send({ message: 'Bookmark updated successfully!', result: result.recordset });
+    } catch (error) {
+        console.error('Failed to update bookmark:', error);
+        res.status(500).send({ message: 'Failed to update bookmark', error });
+    }
+});
+
+// Route to delete a bookmark
+app.delete('/bookmarks/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await sql.query`
+            UPDATE Bookmarks SET
+                DeletedIndicator = 1
+            WHERE AutoNo = ${id}
+        `;
+        res.send({ message: 'Bookmark deleted successfully!' });
+    } catch (error) {
+        console.error('Failed to delete bookmark:', error);
+        res.status(500).send({ message: 'Failed to delete bookmark', error });
+    }
+});
+
+// Start the server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
