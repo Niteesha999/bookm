@@ -1,0 +1,59 @@
+Progress Report on Bookmark Task
+Overview
+The objective of this project is to create a bookmark functionality within our Qlik environment, allowing user-selected options from dropdown lists to be saved, edited, and deleted, with all interactions being recorded in an SQL database. This functionality includes capturing user-specific information and maintaining timestamps in the EST timezone. Additionally, the selected dropdown options should be matched to an existing table and the complete matched rows should be displayed on the 'Blotter' page. The final task will be the integration with IIS to ensure a smooth deployment process.
+
+Achievements to Date
+Initial Setup and Environment Configuration:
+
+Python and Flask Setup: I set up a Flask application to serve as the backend, facilitating communication between our Qlik front end and the SQL database. This setup included installing necessary libraries and configuring the Flask environment.
+Database Connection: I configured the Flask application to connect to the SQL Server using Windows Authentication via pyodbc. This involved creating a trusted connection string to ensure secure communication with the database.
+Database Schema and Table Modifications:
+
+Bookmarks Table: I created a Bookmarks table in the SQL database to store bookmark details such as bookmark name, client, product, and client segment. This table serves as the primary storage for all bookmark-related data.
+Additional Columns: Added columns created_on, created_by, updated_on, and updated_by to capture metadata about the creation and modification of bookmarks. This allows for detailed tracking of user interactions and changes over time.
+Timezone Handling: Incorporated the pytz library to ensure timestamps are stored in EST. This involved modifying the backend code to convert all timestamps to EST before storing them in the database.
+Backend API Endpoints:
+
+Save Bookmark: Implemented an endpoint to save new bookmarks. This endpoint captures the user who created the bookmark and the current EST timestamp. It ensures that all relevant bookmark details are stored accurately.
+Update Bookmark: Developed an endpoint to update existing bookmarks. This endpoint records the user who made the update and the updated timestamp. It ensures that any modifications to bookmarks are tracked and stored.
+Delete Bookmark: Created an endpoint to delete bookmarks. This functionality allows users to remove bookmarks from the database.
+Retrieve Bookmarks: Implemented an endpoint to fetch all saved bookmarks from the database for display. This endpoint ensures that users can view their saved bookmarks at any time.
+Frontend Integration:
+
+Dropdown Lists: Populated the client, product, and client segment dropdown lists dynamically from Qlik. This involved writing JavaScript code to fetch data from Qlik and populate the dropdowns accordingly.
+Save Functionality: Enabled users to save their selected options as bookmarks. This functionality is integrated with the backend save endpoint.
+Edit Functionality: Allowed users to edit existing bookmarks, with selected options correctly reflected in the dropdown lists and under them with cross marks for easy removal. This ensures that users can update their bookmarks seamlessly.
+Delete Functionality: Provided a way for users to delete bookmarks. This functionality is integrated with the backend delete endpoint.
+Search Functionality: Added search boxes to filter options in the dropdown lists, enhancing user experience. This makes it easier for users to find specific options without scrolling through long lists.
+User Interface Enhancements:
+
+Design Consistency: Ensured the UI elements like buttons, modals, and dropdowns are consistent with the overall design. This involved customizing the CSS to match the existing design language.
+Cross Marks for Selected Items: Implemented cross marks for each selected item under the dropdown lists to allow easy deselection. This provides a clear and intuitive way for users to manage their selections.
+Database Integrity:
+
+Correct Handling of created_by: Addressed an issue where the created_by field was being set to 'default_user' upon reconnection to the SQL database. Removed the default constraint on the created_by column and ensured that the application correctly sets this field when saving a new bookmark.
+Next Steps
+Data Matching and Display on Blotter Page:
+
+Match Selected Options: Implement functionality to match the selected dropdown options (client, product, client segment) to an existing table containing these columns along with other relevant data.
+Display Matched Rows: Display the complete matched rows on the 'Blotter' page, providing users with a comprehensive view of the relevant data based on their selections.
+Finalize Bookmark Task:
+
+Ensure complete integration and testing of all functionalities, including save, update, and delete operations.
+Verify data consistency and UI responsiveness across different browsers and devices.
+IIS Integration:
+
+Plan to integrate with IIS after the completion of development to avoid the need for frequent configuration changes during development.
+Ensure a smooth deployment process by setting up a staging environment with IIS that mirrors the production environment.
+Additional Features and Enhancements:
+
+Explore additional functionalities like sorting and categorizing bookmarks for better organization.
+Enhance error handling and user feedback mechanisms to improve user experience.
+Deployment and User Testing:
+
+Deploy the solution in a test environment to ensure it works as expected under real-world conditions.
+Conduct user acceptance testing to gather feedback and make necessary adjustments based on user input.
+Conclusion
+I have made significant progress in developing the bookmark functionality, integrating it seamlessly with our Qlik environment and SQL database. The project is on track, with major functionalities implemented and tested. My focus now shifts to finalizing the remaining tasks, ensuring robustness, and preparing for deployment and user testing.
+
+Thank you for your continued support and guidance.
