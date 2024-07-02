@@ -1,0 +1,287 @@
+JS-->
+function displaySavedBookmarks() {
+    const bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [];
+    const listElement = document.getElementById('bookmarksList');
+    listElement.innerHTML = '';
+
+    if (bookmarks.length > 0) {
+        const table = document.createElement('table');
+        table.classList.add('bookmarks-table');
+
+        // Create table headers
+        const headers = ['Bookmark Name', 'Clients', 'Products', 'Client Segments', 'Actions'];
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        headers.forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // Create table body
+        const tbody = document.createElement('tbody');
+        bookmarks.forEach((bookmark, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${bookmark.bookmarkName}</td>
+                <td>${bookmark.client ? bookmark.client.join(', ') : 'N/A'}</td>
+                <td>${bookmark.product ? bookmark.product.join(', ') : 'N/A'}</td>
+                <td>${bookmark.clientSegment ? bookmark.clientSegment.join(', ') : 'N/A'}</td>
+                <td>
+                    <button class="edit-btn" onclick="editBookmark(${index})">Edit</button>
+                    <button class="delete-btn" onclick="deleteBookmark(${index})">Delete</button>
+                    <button class="apply-btn" onclick="applyBookmark(${index})">Apply</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        listElement.appendChild(table);
+    } else {
+        listElement.textContent = 'No bookmarks saved.';
+    }
+}
+
+function applyBookmark(index) {
+    const bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [];
+    if (index >= 0 && index < bookmarks.length) {
+        const bookmark = bookmarks[index];
+        const filters = {
+            client: bookmark.client,
+            product: bookmark.product,
+            clientSegment: bookmark.clientSegment
+        };
+
+        fetch('http://localhost:5000/apply-filters', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(filters),
+        })
+        .then(response => response.json())
+        .then(data => {
+            displayMatchedData(data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
+}
+
+function displayMatchedData(data) {
+    const container = document.getElementById('matchedDataContainer');
+    container.innerHTML = ''; // Clear previous content
+
+    if (data.length > 0) {
+        const table = document.createElement('table');
+        table.classList.add('matched-data-table');
+
+        // Create table headers
+        const headers = Object.keys(data[0]);
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        headers.forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        // Create table body
+        const tbody = document.createElement('tbody');
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            headers.forEach(header => {
+                const td = document.createElement('td');
+                td.textContent = row[header];
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+
+        container.appendChild(table);
+    } else {
+        container.textContent = 'No matched data found.';
+    }
+
+    // Show the modal
+    document.getElementById('matchedDataModal').style.display = 'block';
+}
+
+function closeModal() {
+    document.getElementById('matchedDataModal').style.display = 'none';
+}
+
+
+
+
+
+html-->
+
+<!-- Modal for displaying matched data -->
+<div id="matchedDataModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeModal()">&times;</span>
+        <h2>Matched Data</h2>
+        <div id="matchedDataContainer"></div>
+    </div>
+</div>
+
+
+app.py-->
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
+import urllib.parse
+from datetime import datetime
+import pytz
+import requests
+import json
+
+app = Flask(__name__)
+CORS(app)
+
+# Connection string
+trusted_conn_str = 'DRIVER={ODBC Driver 17 for SQL Server};SERVER=GBRDSM050001065\SAC_SQLVIRT_TEST;DATABASE=SRDWStg;TRUSTED_CONNECTION=yes'
+encoded_conn_str = urllib.parse.quote_plus(trusted_conn_str)
+
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc:///?odbc_connect=' + encoded_conn_str
+db = SQLAlchemy(app)
+
+# Define EST timezone
+est = pytz.timezone('US/Eastern')
+
+class Bookmark(db.Model):
+    __tablename__ = 'Bookmarks'
+    id = db.Column('Id', db.Integer, primary_key=True)
+    bookmark_name = db.Column('BookmarkName', db.String(100))
+    client = db.Column('Client', db.String(500))
+    product = db.Column('Product', db.String(500))
+    client_segment = db.Column('ClientSegment', db.String(500))
+    created_on = db.Column('CreatedOn', db.DateTime)
+    created_by = db.Column('CreatedBy', db.String(255), nullable=False)
+    updated_on = db.Column('UpdatedOn', db.DateTime, nullable=True)
+    updated_by = db.Column('UpdatedBy', db.String(255), nullable=True)
+    bookmark_qlik_format = db.Column('bookmarkQlikFormat', db.String(1000))
+
+def construct_qlik_format(client, product, client_segment):
+    qlik_format = "{<[Client]={"
+    qlik_format += ",".join([f"'{c}'" for c in client])
+    qlik_format += "},[Product]={"
+    qlik_format += ",".join([f"'{p}'" for p in product])
+    qlik_format += "},[Client Segment]={"
+    qlik_format += ",".join([f"'{cs}'" for cs in client_segment])
+    qlik_format += "}>}"
+    return qlik_format
+
+@app.route('/save', methods=['POST'])
+def save_bookmark():
+    data = request.json
+    username = data['username']
+    created_on_est = datetime.now(est)  # Convert to EST
+    client = data['client']
+    product = data['product']
+    client_segment = data['clientSegment']
+    qlik_format = construct_qlik_format(client, product, client_segment)
+    new_bookmark = Bookmark(
+        bookmark_name=data['bookmarkName'],
+        client=','.join(client),
+        product=','.join(product),
+        client_segment=','.join(client_segment),
+        created_on=created_on_est,
+        created_by=username,
+        bookmark_qlik_format=qlik_format
+    )
+    db.session.add(new_bookmark)
+    db.session.commit()
+    return jsonify({'message': 'Bookmark saved successfully!'})
+
+@app.route('/update/<int:id>', methods=['PUT'])
+def update_bookmark(id):
+    data = request.json
+    bookmark = Bookmark.query.get(id)
+    if bookmark:
+        bookmark.bookmark_name = data['bookmarkName']
+        bookmark.client = ','.join(data['client'])
+        bookmark.product = ','.join(data['product'])
+        bookmark.client_segment = ','.join(data['clientSegment'])
+        bookmark.updated_on = datetime.now(est)  # Convert to EST
+        bookmark.updated_by = data['username']
+        bookmark.bookmark_qlik_format = construct_qlik_format(data['client'], data['product'], data['clientSegment'])
+        db.session.commit()
+        return jsonify({'message': 'Bookmark updated successfully!'})
+    return jsonify({'message': 'Bookmark not found!'}), 404
+
+@app.route('/delete/<int:id>', methods=['DELETE'])
+def delete_bookmark(id):
+    bookmark = Bookmark.query.get(id)
+    if bookmark:
+        db.session.delete(bookmark)
+        db.session.commit()
+        return jsonify({'message': 'Bookmark deleted successfully!'})
+    return jsonify({'message': 'Bookmark not found!'}), 404
+
+@app.route('/bookmarks', methods=['GET'])
+def get_bookmarks():
+    bookmarks = Bookmark.query.all()
+    result = []
+    for bookmark in bookmarks:
+        result.append({
+            'id': bookmark.id,
+            'bookmarkName': bookmark.bookmark_name,
+            'client': bookmark.client.split(','),
+            'product': bookmark.product.split(','),
+            'clientSegment': bookmark.client_segment.split(','),
+            'bookmarkQlikFormat': bookmark.bookmark_qlik_format
+        })
+    return jsonify(result)
+
+@app.route('/apply-filters', methods=['POST'])
+def apply_filters():
+    data = request.json
+    client = data['client']
+    product = data['product']
+    client_segment = data['clientSegment']
+
+    # Query Qlik Sense to match the selected options
+    matched_data = query_qlik_sense(client, product, client_segment)
+
+    return jsonify(matched_data)
+
+def query_qlik_sense(client, product, client_segment):
+    qlik_server = 'https://your-qlik-sense-server'
+    app_id = 'your-app-id'
+    sheet_id = 'your-sheet-id'
+    object_id = 'your-object-id'
+    endpoint = f'{qlik_server}/qrs/app/{app_id}/sheet/{sheet_id}/object/{object_id}/data'
+
+    filters = {
+        'Client': client,
+        'Product': product,
+        'Client Segment': client_segment
+    }
+
+    # Assuming that no authentication is required
+    headers = {
+        'Content-Type': 'application/json'
+    }
+
+    response = requests.post(endpoint, headers=headers, data=json.dumps(filters), verify=False)
+
+    if response.status_code == 200:
+        matched_data = response.json()
+        return matched_data
+    else:
+        print(f'Error querying Qlik Sense: {response.status_code} - {response.text}')
+        return []
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)
