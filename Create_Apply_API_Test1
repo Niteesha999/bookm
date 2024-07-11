@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmark Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        /* Add your CSS styles here */
+    </style>
+</head>
+<body>
+
+<span class="user-name" id="MDMUserName"> </span>
+
+<button id="bookmarkBtn" class="bookmark-btn" style="float: right;"><i class="fa fa-book"></i>Bookmark</button>
+<div id="bookmarkModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Add Bookmark</h2>
+        <form id="bookmarkForm" onsubmit="createBookmark(); return false;">
+            <div class="form-group">
+                <label for="bookmarkName">Bookmark Name:</label>
+                <input type="text" id="bookmarkName" name="bookmarkName" required>
+            </div>
+            <div class="form-group">
+                <label for="client">Client:</label>
+                <input type="text" id="clientSearch" placeholder="Search clients" onkeyup="filterOptions('client', 'clientSearch')"><br><br>
+                <select id="client" name="client" multiple onchange="updateSelectedList('client', 'selectedClients')"></select>
+                <div id="selectedClients" class="selected-list"></div>
+            </div>
+            <div class="form-group">
+                <label for="product">Product:</label>
+                <input type="text" id="productSearch" placeholder="Search products" onkeyup="filterOptions('product', 'productSearch')"><br><br>
+                <select id="product" name="product" multiple onchange="updateSelectedList('product', 'selectedProducts')"></select>
+                <div id="selectedProducts" class="selected-list"></div>
+            </div>
+            <div class="form-group">
+                <label for="clientSegment">Client Segment:</label>
+                <input type="text" id="clientSegmentSearch" placeholder="Search client segments" onkeyup="filterOptions('clientSegment', 'clientSegmentSearch')"><br><br>
+                <select id="clientSegment" name="clientSegment" multiple onchange="updateSelectedList('clientSegment', 'selectedClientSegments')"></select>
+                <div id="selectedClientSegments" class="selected-list"></div>
+            </div>
+            <input type="hidden" id="editIndex" value="">
+            <input type="hidden" id="bookmarkId" value="">
+            <button type="submit" class="save-btn">Save</button>
+            <button type="button" class="view-bookmarks-btn" onclick="viewSavedBookmarks()">Saved Bookmarks</button>
+            <input type="reset" value="Reset">
+        </form>
+    </div>
+</div>
+<div id="bookmarksModal" class="bookmarks-modal">
+    <div class="bookmarks-modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Saved Bookmarks</h2>
+        <table class="bookmarks-list">
+            <thead>
+                <tr>
+                    <th>Bookmark Name</th>
+                    <th>Clients</th>
+                    <th>Products</th>
+                    <th>Client Segments</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="bookmarksList"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal for displaying matched data -->
+<div id="matchedDataModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeModal()">&times;</span>
+        <h2>Matched Data</h2>
+        <div id="matchedDataContainer"></div>
+    </div>
+</div>
+
+<script src="https://qlik.dev"></script>
+<script>
+    function filterOptions(selectId, searchId) {
+        var input, filter, select, options, i;
+        input = document.getElementById(searchId);
+        filter = input.value.toUpperCase();
+        select = document.getElementById(selectId);
+        options = select.getElementsByTagName('option');
+        for (i = 0; i < options.length; i++) {
+            let txtValue = options[i].textContent || options[i].innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                options[i].style.display = "";
+            } else {
+                options[i].style.display = "none";
+            }
+        }
+    }
+
+    function updateSelectedList(selectId, listId) {
+        const select = document.getElementById(selectId);
+        const list = document.getElementById(listId);
+        list.innerHTML = '';
+        const selectedOptions = Array.from(select.selectedOptions);
+        selectedOptions.forEach(option => {
+            const item = document.createElement('span');
+            item.className = 'selected-item';
+            item.textContent = option.text;
+            const removeBtn = document.createElement('i');
+            removeBtn.className = 'fa fa-times';
+            removeBtn.onclick = function() {
+                option.selected = false;
+                updateSelectedList(selectId, listId);
+            };
+            item.appendChild(removeBtn);
+            list.appendChild(item);
+        });
+        displayClientSelections();
+    }
+
+    function displayClientSelections() {
+        const clientSelect = document.getElementById('client');
+        const selectedClients = Array.from(clientSelect.selectedOptions).map(option => option.value);
+        console.log('Selected Clients:', selectedClients);
+    }
+
+    function createBookmark() {
+        const bookmarkName = document.getElementById('bookmarkName').value;
+        const client = Array.from(document.getElementById('client').selectedOptions).map(option => option.value);
+        const product = Array.from(document.getElementById('product').selectedOptions).map(option => option.value);
+        const clientSegment = Array.from(document.getElementById('clientSegment').selectedOptions).map(option => option.value);
+
+        const selection = {
+            client: client.join(", "),
+            product: product.join(", "),
+            clientSegment: clientSegment.join(", ")
+        };
+
+        const app = qlik.currApp(this);
+
+        // Create variables
+        app.variable.create({ qName: 'vClient', qDefinition: selection.client });
+        app.variable.create({ qName: 'vProduct', qDefinition: selection.product });
+        app.variable.create({ qName: 'vClientSegment', qDefinition: selection.clientSegment });
+
+        app.bookmark.create(
+            {
+                qTitle: bookmarkName,
+                qDescription: JSON.stringify(selection)
+            },
+            function(response) {
+                alert('Bookmark created successfully!');
+                viewSavedBookmarks();
+            },
+            function(error) {
+                console.error('Error creating bookmark:', error);
+            }
+        );
+    }
+
+    function applyBookmark(id) {
+        const app = qlik.currApp(this);
+
+        app.bookmark.apply(id)
+        .then(function(response) {
+            // Get bookmark details and set variables
+            app.variable.setStringValue('vClient', response.qDescription.client);
+            app.variable.setStringValue('vProduct', response.qDescription.product);
+            app.variable.setStringValue('vClientSegment', response.qDescription.clientSegment);
+
+            alert('Bookmark applied successfully!');
+        })
+        .catch(function(error) {
+            console.error('Error applying bookmark:', error);
+        });
+    }
+
+    function viewSavedBookmarks() {
+        const app = qlik.currApp(this);
+
+        app.getList('BookmarkList', function(reply) {
+            const listElement = document.getElementById('bookmarksList');
+            listElement.innerHTML = '';
+
+            reply.qBookmarkList.qItems.forEach(bookmark => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${bookmark.qData.title}</td>
+                    <td>${JSON.parse(bookmark.qData.description).client}</td>
+                    <td>${JSON.parse(bookmark.qData.description).product}</td>
+                    <td>${JSON.parse(bookmark.qData.description).clientSegment}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="apply-btn" onclick="applyBookmark('${bookmark.qInfo.qId}')">Apply</button>
+                        </div>
+                    </td>`;
+                listElement.appendChild(row);
+            });
+        });
+    }
+
+    function closeModal() {
+        document.getElementById('matchedDataModal').style.display = 'none';
+    }
+
+    // Initialize the dropdown with options from Qlik Sense
+    require(["js/qlik"], function(qlik) {
+        var app = qlik.openApp('your-app-id', config); // Replace 'your-app-id' and 'config' with actual values
+
+        var myField = app.field("Client Field Name").getData(); // Replace "Client Field Name" with the actual field name
+        myField.OnData.bind(function() {
+            var clientSelect = document.getElementById('client');
+            clientSelect.innerHTML = ''; // Clear any existing options
+            myField.rows.forEach(function(row) {
+                var option = document.createElement("option");
+                option.value = row.qText;
+                option.textContent = row.qText;
+                clientSelect.appendChild(option);
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
