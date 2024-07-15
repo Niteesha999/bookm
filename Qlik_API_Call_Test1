@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookmark Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        .bookmark-btn {
+            background-color: #11c4ff;
+            color: white;
+            padding: 2px 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 17px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bookmark-btn::before {
+            content: url('https://www.flaticon.com/free-icon/favorite_9775292');
+            margin-right: 5px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .edit-btn, .delete-btn, .apply-btn {
+            background-color: #154360;
+            color: white;
+            padding: 5px 7px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .delete-btn {
+            background-color: #0076b6;
+        }
+
+        .delete-btn:hover {
+            background-color: #154360;
+        }
+
+        .modal {
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .bookmarks-modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content, .bookmarks-modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 5px;
+        }
+
+        .close-button {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close-button:hover, .close-button:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group select {
+            width: 100%;
+            height: 75px;
+            overflow-y: auto;
+        }
+
+        .form-group input[type="text"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 5px;
+            z-index: 1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 15px;
+        }
+
+        .save-btn, .view-bookmarks-btn {
+            background-color: #00416b;
+            color: white;
+            padding: 10px 20px;
+            margin-right: 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .save-btn:hover, .view-bookmarks-btn:hover {
+            background-color: #0097C7;
+        }
+
+        .bookmarks-list {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .bookmarks-list th, .bookmarks-list td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .bookmarks-list th {
+            background-color: #f2f2f2;
+        }
+
+        .selected-list {
+            padding: 5px;
+            font-size: 14px;
+        }
+
+        .selected-item {
+            display: inline-block;
+            margin: 2px;
+            padding: 2px 5px;
+            background-color: #cce5ff;
+            border-radius: 4px;
+        }
+
+        .selected-item i {
+            margin-left: 5px;
+            cursor: pointer;
+        }
+
+        input[type=reset] {
+            background-color: #0076b6;
+            color: white;
+            padding: 10px 20px;
+            margin-left: 150px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<span class="user-name" id="MDMUserName"> Hi Sai! </span>
+
+<button id="bookmarkBtn" class="bookmark-btn" style="float: right;"><i class="fa fa-book"></i>Bookmark</button>
+
+<div id="bookmarkModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Add Bookmark</h2>
+        <form id="bookmarkForm" onsubmit="createBookmark(); return false;">
+            <div class="form-group">
+                <label for="bookmarkName">Bookmark Name:</label>
+                <input type="text" id="bookmarkName" name="bookmarkName" required>
+            </div>
+            <div class="form-group">
+                <label for="client">Client:</label>
+                <input type="text" id="clientSearch" placeholder="Search clients" onkeyup="filterOptions('client', 'clientSearch')"><br><br>
+                <select id="client" name="client" multiple onchange="updateSelectedList('client', 'selectedClients')"></select>
+                <div id="selectedClients" class="selected-list"></div>
+            </div>
+            <div class="form-group">
+                <label for="product">Product:</label>
+                <input type="text" id="productSearch" placeholder="Search products" onkeyup="filterOptions('product', 'productSearch')"><br><br>
+                <select id="product" name="product" multiple onchange="updateSelectedList('product', 'selectedProducts')"></select>
+                <div id="selectedProducts" class="selected-list"></div>
+            </div>
+            <div class="form-group">
+                <label for="clientSegment">Client Segment:</label>
+                <input type="text" id="clientSegmentSearch" placeholder="Search client segments" onkeyup="filterOptions('clientSegment', 'clientSegmentSearch')"><br><br>
+                <select id="clientSegment" name="clientSegment" multiple onchange="updateSelectedList('clientSegment', 'selectedClientSegments')"></select>
+                <div id="selectedClientSegments" class="selected-list"></div>
+            </div>
+            <input type="hidden" id="editIndex" value="">
+            <input type="hidden" id="bookmarkId" value="">
+            <button type="submit" class="save-btn">Save</button>
+            <button type="button" class="view-bookmarks-btn" onclick="viewSavedBookmarks()">Saved Bookmarks</button>
+            <input type="reset" value="Reset">
+        </form>
+    </div>
+</div>
+
+<div id="bookmarksModal" class="bookmarks-modal">
+    <div class="bookmarks-modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Saved Bookmarks</h2>
+        <table class="bookmarks-list">
+            <thead>
+                <tr>
+                    <th>Bookmark Name</th>
+                    <th>Clients</th>
+                    <th>Products</th>
+                    <th>Client Segments</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="bookmarksList"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal for displaying matched data -->
+<div id="matchedDataModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeModal()">&times;</span>
+        <h2>Matched Data</h2>
+        <div id="matchedDataContainer"></div>
+    </div>
+</div>
+
+<script>
+    function filterOptions(selectId, searchId) {
+        var input, filter, select, options, i;
+        input = document.getElementById(searchId);
+        filter = input.value.toUpperCase();
+        select = document.getElementById(selectId);
+        options = select.getElementsByTagName('option');
+        for (i = 0; i < options.length; i++) {
+            let txtValue = options[i].textContent || options[i].innerText;
+            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                options[i].style.display = "";
+            } else {
+                options[i].style.display = "none";
+            }
+        }
+    }
+
+    function updateSelectedList(selectId, listId) {
+        const select = document.getElementById(selectId);
+        const list = document.getElementById(listId);
+        list.innerHTML = '';
+        const selectedOptions = Array.from(select.selectedOptions);
+        selectedOptions.forEach(option => {
+            const item = document.createElement('span');
+            item.className = 'selected-item';
+            item.textContent = option.text;
+            const removeBtn = document.createElement('i');
+            removeBtn.className = 'fa fa-times';
+            removeBtn.onclick = function() {
+                option.selected = false;
+                updateSelectedList(selectId, listId);
+            };
+            item.appendChild(removeBtn);
+            list.appendChild(item);
+        });
+    }
+
+    function createBookmark() {
+        const bookmarkName = document.getElementById('bookmarkName').value;
+        const client = Array.from(document.getElementById('client').selectedOptions).map(option => option.value);
+        const product = Array.from(document.getElementById('product').selectedOptions).map(option => option.value);
+        const clientSegment = Array.from(document.getElementById('clientSegment').selectedOptions).map(option => option.value);
+        const username = document.getElementById('MDMUserName').textContent.trim().split(' ')[1]; // Extract username
+
+        const bookmark = {
+            bookmarkName: bookmarkName,
+            client: client,
+            product: product,
+            clientSegment: clientSegment,
+            createdBy: username,
+            createdOn: new Date().toISOString(),
+            updatedBy: null,
+            updatedOn: null,
+            bookmarkQlikFormat: `{<[Client]={${client.map(c => `'${c}'`).join(',')}},[Product]={${product.map(p => `'${p}'`).join(',')}},[Client Segment]={${clientSegment.map(cs => `'${cs}'`).join(',')}}>}`
+        };
+
+        fetch('http://localhost:5000/save', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(bookmark),
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            viewSavedBookmarks();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
+
+    function viewSavedBookmarks() {
+        fetch('http://localhost:5000/bookmarks')
+        .then(response => response.json())
+        .then(data => {
+            const listElement = document.getElementById('bookmarksList');
+            listElement.innerHTML = '';
+
+            data.forEach(bookmark => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${bookmark.bookmarkName}</td>
+                    <td>${bookmark.client.join(', ')}</td>
+                    <td>${bookmark.product.join(', ')}</td>
+                    <td>${bookmark.clientSegment.join(', ')}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="apply-btn" onclick="applyBookmark(${bookmark.id})">Apply</button>
+                            <button class="edit-btn" onclick="editBookmark(${bookmark.id}, '${bookmark.bookmarkName}', '${bookmark.client.join(', ')}', '${bookmark.product.join(', ')}', '${bookmark.clientSegment.join(', ')}')">Edit</button>
+                            <button class="delete-btn" onclick="deleteBookmark(${bookmark.id})">Delete</button>
+                        </div>
+                    </td>`;
+                listElement.appendChild(row);
+            });
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
+
+    function deleteBookmark(id) {
+        fetch(`http://localhost:5000/delete/${id}`, {
+            method: 'DELETE',
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.message);
+            viewSavedBookmarks();
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
+
+    function editBookmark(id, name, clients, products, segments) {
+        document.getElementById('bookmarkName').value = name;
+        document.getElementById('bookmarkId').value = id;
+        setSelectedOptions('client', clients.split(', '));
+        setSelectedOptions('product', products.split(', '));
+        setSelectedOptions('clientSegment', segments.split(', '));
+        document.getElementById('bookmarksModal').style.display = 'none';
+        document.getElementById('bookmarkModal').style.display = 'block';
+    }
+
+    function setSelectedOptions(selectId, values) {
+        const select = document.getElementById(selectId);
+        Array.from(select.options).forEach(option => {
+            option.selected = values.includes(option.value);
+        });
+        updateSelectedList(selectId, 'selected' + selectId.charAt(0).toUpperCase() + selectId.slice(1) + 's');
+    }
+
+    function applyBookmark(id) {
+        fetch(`http://localhost:5000/bookmarks/${id}`)
+        .then(response => response.json())
+        .then(bookmark => {
+            const app = qlik.currApp();
+            app.variable.setStringValue('vClient', bookmark.client.join('|'));
+            app.variable.setStringValue('vProduct', bookmark.product.join('|'));
+            app.variable.setStringValue('vClientSegment', bookmark.clientSegment.join('|'));
+
+            alert('Bookmark applied successfully!');
+            displayMatchedData(bookmark.client, bookmark.product, bookmark.clientSegment);
+        })
+        .catch((error) => {
+            console.error('Error applying bookmark:', error);
+        });
+    }
+
+    function displayMatchedData(clients, products, clientSegments) {
+        const app = qlik.currApp();
+
+        // Set selections
+        app.field('Client').selectValues(clients.map(c => ({ qText: c })), false, false);
+        app.field('Product').selectValues(products.map(p => ({ qText: p })), false, false);
+        app.field('Client Segment').selectValues(clientSegments.map(cs => ({ qText: cs })), false, false);
+
+        // Get matched data from the Qlik sense table
+        const objectId = 'your-object-id'; // Replace with your Qlik sense object ID
+        app.getObject('matchedDataContainer', objectId);
+
+        // Show the matched data modal
+        document.getElementById('matchedDataModal').style.display = 'block';
+    }
+
+    function closeModal() {
+        document.getElementById('matchedDataModal').style.display = 'none';
+    }
+
+    window.filterOptions = filterOptions;
+    window.updateSelectedList = updateSelectedList;
+    window.createBookmark = createBookmark;
+    window.viewSavedBookmarks = viewSavedBookmarks;
+    window.deleteBookmark = deleteBookmark;
+    window.editBookmark = editBookmark;
+    window.applyBookmark = applyBookmark;
+    window.displayMatchedData = displayMatchedData;
+    window.closeModal = closeModal;
+
+    // Qlik Sense integration
+    require(["js/qlik"], function(qlik) {
+        var app = qlik.currApp(this);
+
+        var myField = app.field("Client").getData();
+        myField.OnData.bind(function() {
+            var clientSelect = document.getElementById('client');
+            clientSelect.innerHTML = ''; // Clear any existing options
+            myField.rows.forEach(function(row) {
+                var option = document.createElement("option");
+                option.value = row.qText;
+                option.textContent = row.qText;
+                clientSelect.appendChild(option);
+            });
+        });
+
+        var myField1 = app.field("Product").getData();
+        myField1.OnData.bind(function() {
+            var productSelect = document.getElementById('product');
+            productSelect.innerHTML = ''; // Clear any existing options
+            myField1.rows.forEach(function(row) {
+                var option = document.createElement("option");
+                option.value = row.qText;
+                option.textContent = row.qText;
+                productSelect.appendChild(option);
+            });
+        });
+
+        var myField2 = app.field("Client Segment").getData();
+        myField2.OnData.bind(function() {
+            var clientSegmentSelect = document.getElementById('clientSegment');
+            clientSegmentSelect.innerHTML = ''; // Clear any existing options
+            myField2.rows.forEach(function(row) {
+                var option = document.createElement("option");
+                option.value = row.qText;
+                option.textContent = row.qText;
+                clientSegmentSelect.appendChild(option);
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
+
+
+
+
+
+Not needed-- Backend-- just try-->
+
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
+import urllib.parse
+from datetime import datetime
+import pytz
+
+app = Flask(__name__)
+CORS(app)
+
+# Connection string
+trusted_conn_str = 'DRIVER={ODBC Driver 17 for SQL Server};SERVER=GBRDSM050001065\SAC_SQLVIRT_TEST;DATABASE=SRDWStg;TRUSTED_CONNECTION=yes'
+encoded_conn_str = urllib.parse.quote_plus(trusted_conn_str)
+
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc:///?odbc_connect=' + encoded_conn_str
+db = SQLAlchemy(app)
+
+# Define EST timezone
+est = pytz.timezone('US/Eastern')
+
+class Bookmark(db.Model):
+    __tablename__ = 'Bookmarks'
+    id = db.Column('Id', db.Integer, primary_key=True)
+    bookmark_name = db.Column('BookmarkName', db.String(100))
+    client = db.Column('Client', db.String(500))
+    product = db.Column('Product', db.String(500))
+    client_segment = db.Column('ClientSegment', db.String(500))
+    created_on = db.Column('CreatedOn', db.DateTime)
+    created_by = db.Column('CreatedBy', db.String(255), nullable=False)
+    updated_on = db.Column('UpdatedOn', db.DateTime, nullable=True)
+    updated_by = db.Column('UpdatedBy', db.String(255), nullable=True)
+    bookmark_qlik_format = db.Column('bookmarkQlikFormat', db.String(1000))
+
+def construct_qlik_format(client, product, client_segment):
+    qlik_format = "{<[Client]={"
+    qlik_format += ",".join([f"'{c}'" for c in client])
+    qlik_format += "},[Product]={"
+    qlik_format += ",".join([f"'{p}'" for p in product])
+    qlik_format += "},[Client Segment]={"
+    qlik_format += ",".join([f"'{cs}'" for cs in client_segment])
+    qlik_format += "}>}"
+    return qlik_format
+
+@app.route('/save', methods=['POST'])
+def save_bookmark():
+    data = request.json
+    username = data['username']
+    created_on_est = datetime.now(est)  # Convert to EST
+    client = data['client']
+    product = data['product']
+    client_segment = data['clientSegment']
+    qlik_format = construct_qlik_format(client, product, client_segment)
+    new_bookmark = Bookmark(
+        bookmark_name=data['bookmarkName'],
+        client=','.join(client),
+        product=','.join(product),
+        client_segment=','.join(client_segment),
+        created_on=created_on_est,
+        created_by=username,
+        bookmark_qlik_format=qlik_format
+    )
+    db.session.add(new_bookmark)
+    db.session.commit()
+    return jsonify({'message': 'Bookmark saved successfully!'})
+
+@app.route('/update/<int:id>', methods=['PUT'])
+def update_bookmark(id):
+    data = request.json
+    bookmark = Bookmark.query.get(id)
+    if bookmark:
+        bookmark.bookmark_name = data['bookmarkName']
+        bookmark.client = ','.join(data['client'])
+        bookmark.product = ','.join(data['product'])
+        bookmark.client_segment = ','.join(data['clientSegment'])
+        bookmark.updated_on = datetime.now(est)  # Convert to EST
+        bookmark.updated_by = data['username']
+        bookmark.bookmark_qlik_format = construct_qlik_format(data['client'], data['product'], data['clientSegment'])
+        db.session.commit()
+        return jsonify({'message': 'Bookmark updated successfully!'})
+    return jsonify({'message': 'Bookmark not found!'}), 404
+
+@app.route('/delete/<int:id>', methods=['DELETE'])
+def delete_bookmark(id):
+    bookmark = Bookmark.query.get(id)
+    if bookmark:
+        db.session.delete(bookmark)
+        db.session.commit()
+        return jsonify({'message': 'Bookmark deleted successfully!'})
+    return jsonify({'message': 'Bookmark not found!'}), 404
+
+@app.route('/bookmarks', methods=['GET'])
+def get_bookmarks():
+    bookmarks = Bookmark.query.all()
+    result = []
+    for bookmark in bookmarks:
+        result.append({
+            'id': bookmark.id,
+            'bookmarkName': bookmark.bookmark_name,
+            'client': bookmark.client.split(','),
+            'product': bookmark.product.split(','),
+            'clientSegment': bookmark.client_segment.split(','),
+            'bookmarkQlikFormat': bookmark.bookmark_qlik_format
+        })
+    return jsonify(result)
+
+if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+    app.run(debug=True)
