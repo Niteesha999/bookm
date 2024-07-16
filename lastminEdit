@@ -1,0 +1,82 @@
+function saveBookmark(bookmark) {
+    fetch('http://localhost:5000/save', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookmark),
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        viewSavedBookmarks();
+
+        // Create Qlik variables
+        app.variable.create({ qName: 'clientVar_' + bookmark.bookmarkName, qDefinition: bookmark.client.join('|') }).then(function() {
+            console.log('clientVar_' + bookmark.bookmarkName + ' created successfully');
+        }).catch(function(error) {
+            console.error('Error creating clientVar_' + bookmark.bookmarkName + ':', error);
+        });
+
+        app.variable.create({ qName: 'productVar_' + bookmark.bookmarkName, qDefinition: bookmark.product.join('|') }).then(function() {
+            console.log('productVar_' + bookmark.bookmarkName + ' created successfully');
+        }).catch(function(error) {
+            console.error('Error creating productVar_' + bookmark.bookmarkName + ':', error);
+        });
+
+        app.variable.create({ qName: 'clientSegmentVar_' + bookmark.bookmarkName, qDefinition: bookmark.clientSegment.join('|') }).then(function() {
+            console.log('clientSegmentVar_' + bookmark.bookmarkName + ' created successfully');
+        }).catch(function(error) {
+            console.error('Error creating clientSegmentVar_' + bookmark.bookmarkName + ':', error);
+        });
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
+
+
+
+function viewSavedBookmarks() {
+    fetch('http://localhost:5000/bookmarks')
+    .then(response => response.json())
+    .then(data => {
+        const listElement = document.getElementById('bookmarksList');
+        listElement.innerHTML = '';
+
+        data.forEach(bookmark => {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${bookmark.bookmarkName}</td>
+                <td id="clientVar_${bookmark.bookmarkName}">${bookmark.client ? bookmark.client.join(', ') : 'N/A'}</td>
+                <td id="productVar_${bookmark.bookmarkName}">${bookmark.product ? bookmark.product.join(', ') : 'N/A'}</td>
+                <td id="clientSegmentVar_${bookmark.bookmarkName}">${bookmark.clientSegment ? bookmark.clientSegment.join(', ') : 'N/A'}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="edit-btn" onclick="editBookmark(${bookmark.id}, '${bookmark.bookmarkName}', '${bookmark.client.join(', ')}', '${bookmark.product.join(', ')}', '${bookmark.clientSegment.join(', ')}')">Edit</button>
+                        <button class="delete-btn" onclick="deleteBookmark(${bookmark.id})">Delete</button>
+                    </div>
+                </td>`;
+            listElement.appendChild(row);
+
+            // Get Qlik variable content
+            app.variable.getContent('clientVar_' + bookmark.bookmarkName, function(reply) {
+                console.log('clientVar_' + bookmark.bookmarkName + ' content:', reply.qContent.qString);
+                document.getElementById(`clientVar_${bookmark.bookmarkName}`).textContent = reply.qContent.qString;
+            });
+
+            app.variable.getContent('productVar_' + bookmark.bookmarkName, function(reply) {
+                console.log('productVar_' + bookmark.bookmarkName + ' content:', reply.qContent.qString);
+                document.getElementById(`productVar_${bookmark.bookmarkName}`).textContent = reply.qContent.qString;
+            });
+
+            app.variable.getContent('clientSegmentVar_' + bookmark.bookmarkName, function(reply) {
+                console.log('clientSegmentVar_' + bookmark.bookmarkName + ' content:', reply.qContent.qString);
+                document.getElementById(`clientSegmentVar_${bookmark.bookmarkName}`).textContent = reply.qContent.qString;
+            });
+        });
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
