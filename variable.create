@@ -1,0 +1,104 @@
+function saveBookmark(bookmark) {
+    fetch('http://localhost:5000/save', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookmark),
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message);
+        viewSavedBookmarks();
+
+        // Create Qlik variables
+        app.variable.create({ qName: 'clientVar', qDefinition: bookmark.client.join('|') });
+        app.variable.create({ qName: 'productVar', qDefinition: bookmark.product.join('|') });
+        app.variable.create({ qName: 'clientSegmentVar', qDefinition: bookmark.clientSegment.join('|') });
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
+
+
+
+function viewSavedBookmarks() {
+    fetch('http://localhost:5000/bookmarks')
+    .then(response => response.json())
+    .then(data => {
+        const listElement = document.getElementById('bookmarksList');
+        listElement.innerHTML = '';
+
+        data.forEach(bookmark => {
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${bookmark.bookmarkName}</td>
+                <td id="clientVar_${bookmark.id}">${bookmark.client ? bookmark.client.join(', ') : 'N/A'}</td>
+                <td id="productVar_${bookmark.id}">${bookmark.product ? bookmark.product.join(', ') : 'N/A'}</td>
+                <td id="clientSegmentVar_${bookmark.id}">${bookmark.clientSegment ? bookmark.clientSegment.join(', ') : 'N/A'}</td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="edit-btn" onclick="editBookmark(${bookmark.id}, '${bookmark.bookmarkName}', '${bookmark.client.join(', ')}', '${bookmark.product.join(', ')}', '${bookmark.clientSegment.join(', ')}')">Edit</button>
+                        <button class="delete-btn" onclick="deleteBookmark(${bookmark.id})">Delete</button>
+                    </div>
+                </td>`;
+            listElement.appendChild(row);
+
+            // Get Qlik variable content
+            app.variable.getContent('clientVar', function(reply) {
+                document.getElementById(`clientVar_${bookmark.id}`).textContent = reply.qContent.qString;
+            });
+            app.variable.getContent('productVar', function(reply) {
+                document.getElementById(`productVar_${bookmark.id}`).textContent = reply.qContent.qString;
+            });
+            app.variable.getContent('clientSegmentVar', function(reply) {
+                document.getElementById(`clientSegmentVar_${bookmark.id}`).textContent = reply.qContent.qString;
+            });
+        });
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
+
+
+
+
+  function editBookmark(id, name, clients, products, segments) {
+    document.getElementById('bookmarkName').value = name;
+    document.getElementById('bookmarkId').value = id;
+    setSelectedOptions('client', clients.split(', '));
+    setSelectedOptions('product', products.split(', '));
+    setSelectedOptions('clientSegment', segments.split(', '));
+    document.getElementById('bookmarksModal').style.display = 'none';
+    document.getElementById('bookmarkModal').style.display = 'block';
+
+    // Apply Qlik variables
+    app.variable.setContent('clientVar', clients.join('|'));
+    app.variable.setContent('productVar', products.join('|'));
+    app.variable.setContent('clientSegmentVar', segments.join('|'));
+}
+
+
+
+
+
+
+
+
+    function editBookmark(id, name, clients, products, segments) {
+    document.getElementById('bookmarkName').value = name;
+    document.getElementById('bookmarkId').value = id;
+    setSelectedOptions('client', clients.split(', '));
+    setSelectedOptions('product', products.split(', '));
+    setSelectedOptions('clientSegment', segments.split(', '));
+    document.getElementById('bookmarksModal').style.display = 'none';
+    document.getElementById('bookmarkModal').style.display = 'block';
+
+    // Apply Qlik variables
+    app.variable.setContent('clientVar', clients.join('|'));
+    app.variable.setContent('productVar', products.join('|'));
+    app.variable.setContent('clientSegmentVar', segments.join('|'));
+}
