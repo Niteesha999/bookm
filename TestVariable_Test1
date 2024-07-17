@@ -433,3 +433,36 @@
     </script>
 </body>
 </html>
+
+
+ window.testVariable = function(bookmarkId) {
+                const bookmarkRow = document.querySelector(`button[onclick="testVariable(${bookmarkId})"]`).closest('tr');
+                const clients = bookmarkRow.cells[1].textContent.split(', ');
+                const products = bookmarkRow.cells[2].textContent.split(', ');
+                const clientSegments = bookmarkRow.cells[3].textContent.split(', ');
+                app.variable.create({
+                    qName: 'SelectedClients',
+                    qDefinition: JSON.stringify(clients)
+                }).then(() => {
+                    app.variable.getContent('SelectedClients', function(reply) {
+                        alert('SelectedClients: ' + JSON.stringify(reply.qContent.qString));
+                    });
+                });
+                app.variable.create({
+                    qName: 'SelectedProducts',
+                    qDefinition: JSON.stringify(products)
+                }).then(() => {
+                    app.variable.getContent('SelectedProducts', function(reply) {
+                        alert('SelectedProducts: ' + JSON.stringify(reply.qContent.qString));
+                    });
+                });
+                app.variable.create({
+                    qName: 'SelectedClientSegments',
+                    qDefinition: JSON.stringify(clientSegments)
+                }).then(() => {
+                    app.variable.getContent('SelectedClientSegments', function(reply) {
+                        alert('SelectedClientSegments: ' + JSON.stringify(reply.qContent.qString));
+                    });
+                });
+            };
+        });
