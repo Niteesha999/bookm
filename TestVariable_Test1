@@ -435,16 +435,21 @@
 </html>
 
 
- window.testVariable = function(bookmarkId) {
+  window.testVariable = function(bookmarkId) {
+                console.log('Test Variable clicked for bookmark ID:', bookmarkId);
                 const bookmarkRow = document.querySelector(`button[onclick="testVariable(${bookmarkId})"]`).closest('tr');
                 const clients = bookmarkRow.cells[1].textContent.split(', ');
                 const products = bookmarkRow.cells[2].textContent.split(', ');
                 const clientSegments = bookmarkRow.cells[3].textContent.split(', ');
+                console.log('Clients:', clients);
+                console.log('Products:', products);
+                console.log('Client Segments:', clientSegments);
                 app.variable.create({
                     qName: 'SelectedClients',
                     qDefinition: JSON.stringify(clients)
                 }).then(() => {
                     app.variable.getContent('SelectedClients', function(reply) {
+                        console.log('SelectedClients reply:', reply);
                         alert('SelectedClients: ' + JSON.stringify(reply.qContent.qString));
                     });
                 });
@@ -453,6 +458,7 @@
                     qDefinition: JSON.stringify(products)
                 }).then(() => {
                     app.variable.getContent('SelectedProducts', function(reply) {
+                        console.log('SelectedProducts reply:', reply);
                         alert('SelectedProducts: ' + JSON.stringify(reply.qContent.qString));
                     });
                 });
@@ -461,6 +467,7 @@
                     qDefinition: JSON.stringify(clientSegments)
                 }).then(() => {
                     app.variable.getContent('SelectedClientSegments', function(reply) {
+                        console.log('SelectedClientSegments reply:', reply);
                         alert('SelectedClientSegments: ' + JSON.stringify(reply.qContent.qString));
                     });
                 });
