@@ -1,3 +1,97 @@
+require(["js/qlik"], function(qlik) {
+    var app = qlik.openApp('');
+
+    document.getElementById('bookmarkBtn').addEventListener('click', function () {
+        document.getElementById('bookmarkModal').style.display = 'block';
+    });
+
+    document.querySelectorAll('.close-button').forEach(button => {
+        button.addEventListener('click', function () {
+            this.parentElement.parentElement.style.display = 'none';
+        });
+    });
+
+    var myField = app.field("IBC Name").getData();
+    myField.OnData.bind(function() {
+        myField.rows.forEach(function(row) {
+            var option = document.createElement("option");
+            option.value = row.qText;
+            option.text = row.qText;
+            document.getElementById("client").appendChild(option);
+        });
+    });
+
+    var myField1 = app.field("ProductLink").getData();
+    myField1.OnData.bind(function() {
+        myField1.rows.forEach(function(row) {
+            var option = document.createElement("option");
+            option.value = row.qText;
+            option.text = row.qText;
+            document.getElementById("product").appendChild(option);
+        });
+    });
+
+    var myField2 = app.field("Client Segment").getData();
+    myField2.OnData.bind(function() {
+        myField2.rows.forEach(function(row) {
+            var option = document.createElement("option");
+            option.value = row.qText;
+            option.text = row.qText;
+            document.getElementById("clientSegment").appendChild(option);
+        });
+    });
+
+    window.testVariable = function(bookmarkId) {
+        console.log('Test Variable clicked for bookmark ID:', bookmarkId);
+        const bookmarkRow = document.querySelector(`button[onclick="testVariable(${bookmarkId})"]`).closest('tr');
+        const clients = bookmarkRow.cells[1].textContent.split(', ');
+        const products = bookmarkRow.cells[2].textContent.split(', ');
+        const clientSegments = bookmarkRow.cells[3].textContent.split(', ');
+
+        console.log('Clients:', clients);
+        console.log('Products:', products);
+        console.log('Client Segments:', clientSegments);
+
+        // Set string value for selected clients
+        app.variable.setStringValue('SelectedClients', JSON.stringify(clients)).then(() => {
+            app.variable.getContent('SelectedClients', function(reply) {
+                console.log('SelectedClients reply:', reply);
+                alert('SelectedClients: ' + JSON.stringify(reply.qContent.qString));
+            });
+        });
+
+        // Set string value for selected products
+        app.variable.setStringValue('SelectedProducts', JSON.stringify(products)).then(() => {
+            app.variable.getContent('SelectedProducts', function(reply) {
+                console.log('SelectedProducts reply:', reply);
+                alert('SelectedProducts: ' + JSON.stringify(reply.qContent.qString));
+            });
+        });
+
+        // Set string value for selected client segments
+        app.variable.setStringValue('SelectedClientSegments', JSON.stringify(clientSegments)).then(() => {
+            app.variable.getContent('SelectedClientSegments', function(reply) {
+                console.log('SelectedClientSegments reply:', reply);
+                alert('SelectedClientSegments: ' + JSON.stringify(reply.qContent.qString));
+            });
+        });
+
+        // Select values in Qlik fields
+        app.field('IBC Name').selectValues(clients.map(client => ({ qText: client })), false);
+        app.field('ProductLink').selectValues(products.map(product => ({ qText: product })), false);
+        app.field('Client Segment').selectValues(clientSegments.map(segment => ({ qText: segment })), false);
+    };
+});
+
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
