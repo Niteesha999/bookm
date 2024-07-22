@@ -1,3 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Include FontAwesome for icons -->
+    <link rel="stylesheet" href=https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css>
+    <style>
+        /* ... Styles ... */
+    </style>
+</head>
+<body>
+    <!-- HTML content remains the same -->
+
+    <script>
+        function filterOptions(selectId, searchId) {
+            // ... existing function code ...
+        }
+
+        function updateSelectedList(selectId, listId) {
+            // ... existing function code ...
+        }
+
+        function viewSavedBookmarks() {
+            displaySavedBookmarks();
+            document.getElementById('bookmarksModal').style.display = 'block';
+        }
+
+        function displaySavedBookmarks() {
+            fetch('http://localhost:5000/bookmarks')
+            .then(response => response.json())
+            .then(data => {
+                const listElement = document.getElementById('bookmarksList');
+                listElement.innerHTML = '';
+                data.forEach(bookmark => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${bookmark.bookmarkName}</td>
+                        <td>${bookmark.client ? bookmark.client.join(', ') : 'N/A'}</td>
+                        <td>${bookmark.product ? bookmark.product.join(', ') : 'N/A'}</td>
+                        <td>${bookmark.clientSegment ? bookmark.clientSegment.join(', ') : 'N/A'}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="edit-btn" onclick="editBookmark(${bookmark.id}, '${bookmark.bookmarkName}', '${bookmark.client.join(', ')}', '${bookmark.product.join(', ')}', '${bookmark.clientSegment.join(', ')}')">Edit</button>
+                                <button class="delete-btn" onclick="deleteBookmark(${bookmark.id})">Delete</button>
+                                <button class="test-variable-btn" onclick="testVariable(${bookmark.id})">Test Variable</button>
+                            </div>
+                        </td>`;
+                    listElement.appendChild(row);
+                });
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+
+        function deleteBookmark(id) {
+            // ... existing function code ...
+        }
+
+        function editBookmark(id, name, clients, products, segments) {
+            // ... existing function code ...
+        }
+
+        function setSelectedOptions(selectId, values) {
+            // ... existing function code ...
+        }
+
+        document.getElementById('bookmarkForm').addEventListener('submit', function (e) {
+            // ... existing function code ...
+        });
+
+        document.getElementById('bookmarkForm').addEventListener('reset', function(){
+            // ... existing function code ...
+        });
+
+        function saveBookmark(bookmark) {
+            // ... existing function code ...
+        }
+
+        function updateBookmark(id, updatedBookmark) {
+            // ... existing function code ...
+        }
+
+        require(["js/qlik"], function(qlik) {
+            var app = qlik.openApp('');
+            document.getElementById('bookmarkBtn').addEventListener('click', function () {
+                document.getElementById('bookmarkModal').style.display = 'block';
+            });
+            document.querySelectorAll('.close-button').forEach(button => {
+                button.addEventListener('click', function () {
+                    this.parentElement.parentElement.style.display = 'none';
+                });
+            });
+
+            var myField = app.field("IBC Name").getData();
+            myField.OnData.bind(function() {
+                myField.rows.forEach(function(row) {
+                    var option = document.createElement("option");
+                    option.value = row.qText;
+                    option.text = row.qText;
+                    document.getElementById("client").appendChild(option);
+                });
+            });
+
+            var myField1 = app.field("ProductLink").getData();
+            myField1.OnData.bind(function() {
+                myField1.rows.forEach(function(row) {
+                    var option = document.createElement("option");
+                    option.value = row.qText;
+                    option.text = row.qText;
+                    document.getElementById("product").appendChild(option);
+                });
+            });
+
+            var myField2 = app.field("Client Segment").getData();
+            myField2.OnData.bind(function() {
+                myField2.rows.forEach(function(row) {
+                    var option = document.createElement("option");
+                    option.value = row.qText;
+                    option.text = row.qText;
+                    document.getElementById("clientSegment").appendChild(option);
+                });
+            });
+
+            window.testVariable = function(bookmarkId) {
+                console.log('Test Variable clicked for bookmark ID:', bookmarkId);
+                const bookmarkRow = document.querySelector(`button[onclick="testVariable(${bookmarkId})"]`).closest('tr');
+                const clients = bookmarkRow.cells[1].textContent.split(', ');
+                console.log('Clients:', clients);
+
+                // Select values in the Qlik field
+                app.field('IBC Name').selectValues(clients.map(client => ({ qText: client })), false, false)
+                    .then(() => {
+                        // Fetch the filtered data
+                        return app.createCube({
+                            qDimensions: [
+                                { qDef: { qFieldDefs: ["IBC Name"] } },
+                                { qDef: { qFieldDefs: ["ProductLink"] } },
+                                { qDef: { qFieldDefs: ["Client Segment"] } }
+                            ],
+                            qMeasures: [],
+                            qInitialDataFetch: [{
+                                qTop: 0,
+                                qLeft: 0,
+                                qHeight: 100,  // Adjust as needed
+                                qWidth: 3
+                            }]
+                        });
+                    })
+                    .then(hypercube => {
+                        console.log('Hypercube:', hypercube); // Add this line for debugging
+                        if (hypercube && hypercube.qHyperCube && hypercube.qHyperCube.qDataPages) {
+                            const matrix = hypercube.qHyperCube.qDataPages[0].qMatrix;
+                            const tableBody = document.getElementById('filteredDataTable').querySelector('tbody');
+                            tableBody.innerHTML = '';  // Clear previous data
+                            matrix.forEach(row => {
+                                const tr = document.createElement('tr');
+                                row.forEach(cell => {
+                                    const td = document.createElement('td');
+                                    td.textContent = cell.qText;
+                                    tr.appendChild(td);
+                                });
+                                tableBody.appendChild(tr);
+                            });
+                        } else {
+                            console.error('Hypercube data pages are not defined:', hypercube);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error selecting clients or fetching data.');
+                    });
+            };
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
 require(["js/qlik"], function(qlik) {
     var app = qlik.openApp('');
 
