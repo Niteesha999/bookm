@@ -1,0 +1,30 @@
+
+### Explanation of the Code:
+
+1. **HTML Structure**:
+   - **Bookmark Button**: A button to open the modal for adding bookmarks.
+   - **Bookmark Modal**: A modal form to add or edit bookmarks.
+   - **Bookmarks Modal**: A modal to display saved bookmarks.
+   - **Filtered Data Container**: A table to display the filtered data from the Qlik app.
+
+2. **JavaScript Functions**:
+   - **filterOptions()**: Filters the options in the select dropdowns based on user input.
+   - **updateSelectedList()**: Updates the list of selected items from the dropdowns.
+   - **viewSavedBookmarks()**: Displays the saved bookmarks in a modal.
+   -
+
+ **displaySavedBookmarks()**: Fetches and displays saved bookmarks from the server.
+   - **deleteBookmark()**: Deletes a bookmark from the server.
+   - **editBookmark()**: Populates the bookmark form with data for editing.
+   - **setSelectedOptions()**: Sets the selected options in the dropdowns.
+   - **saveBookmark()**: Saves a new bookmark to the server.
+   - **updateBookmark()**: Updates an existing bookmark on the server.
+   - **testVariable()**: Passes the selected client values to the Qlik app and filters the data accordingly.
+
+3. **Qlik Integration**:
+   - **require(["js/qlik"], function(qlik) { ... })**: Loads the Qlik library and initializes the Qlik app.
+   - **app.field("IBC Name").selectValues()**: Selects the client values in the Qlik app.
+   - **app.createCube()**: Creates a hypercube to fetch the filtered data based on the selected clients.
+   - **Display Filtered Data**: Populates the `filteredDataTable` with the filtered data from the Qlik app.
+
+This code should allow you to pass the selected client values from your bookmark form to the Qlik app and display the filtered data on your webpage.
