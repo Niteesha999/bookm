@@ -1,3 +1,101 @@
+require(["js/qlik"], function(qlik) {
+    var app = qlik.openApp('');
+
+    document.getElementById('bookmarkBtn').addEventListener('click', function () {
+        document.getElementById('bookmarkModal').style.display = 'block';
+    });
+
+    document.querySelectorAll('.close-button').forEach(button => {
+        button.addEventListener('click', function () {
+            this.parentElement.parentElement.style.display = 'none';
+        });
+    });
+
+    var myField = app.field("IBC Name").getData();
+    myField.OnData.bind(function() {
+        myField.rows.forEach(function(row) {
+            var option = document.createElement("option");
+            option.value = row.qText;
+            option.text = row.qText;
+            document.getElementById("client").appendChild(option);
+        });
+    });
+
+    var myField1 = app.field("ProductLink").getData();
+    myField1.OnData.bind(function() {
+        myField1.rows.forEach(function(row) {
+            var option = document.createElement("option");
+            option.value = row.qText;
+            option.text = row.qText;
+            document.getElementById("product").appendChild(option);
+        });
+    });
+
+    var myField2 = app.field("Client Segment").getData();
+    myField2.OnData.bind(function() {
+        myField2.rows.forEach(function(row) {
+            var option = document.createElement("option");
+            option.value = row.qText;
+            option.text = row.qText;
+            document.getElementById("clientSegment").appendChild(option);
+        });
+    });
+
+    window.testVariable = function(bookmarkId) {
+        console.log('Test Variable clicked for bookmark ID:', bookmarkId);
+        const bookmarkRow = document.querySelector(`button[onclick="testVariable(${bookmarkId})"]`).closest('tr');
+        const clients = bookmarkRow.cells[1].textContent.split(', ');
+        console.log('Clients:', clients);
+
+        app.field("IBC Name").selectValues(clients.map(client => ({ qText: client })), true, true)
+        .then(() => {
+            return app.createCube({
+                qDimensions: [
+                    { qDef: { qFieldDefs: ["IBC Name"] } },
+                    { qDef: { qFieldDefs: ["ProductLink"] } },
+                    { qDef: { qFieldDefs: ["Client Segment"] } }
+                ],
+                qMeasures: [],
+                qInitialDataFetch: [{
+                    qTop: 0,
+                    qHeight: 100,
+                    qWidth: 3
+                }]
+            });
+        })
+        .then(hypercube => {
+            console.log("Hypercube:", hypercube);
+            if (hypercube && hypercube.qHyperCube && hypercube.qHyperCube.qDataPages) {
+                const matrix = hypercube.qHyperCube.qDataPages[0].qMatrix;
+                console.log('Matrix:', matrix);
+                const tableBody = document.getElementById('filteredDataTable').querySelector('tbody');
+                tableBody.innerHTML = '';
+                matrix.forEach(row => {
+                    const tr = document.createElement('tr');
+                    row.forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell.qText;
+                        tr.appendChild(td);
+                    });
+                    tableBody.appendChild(tr);
+                });
+            } else {
+                console.error('Hypercube data pages are not defined:', hypercube);
+            }
+        })
+        .catch(error => {
+            console.error('Error selecting clients or fetching data:', error);
+            alert('Error selecting clients or fetching data.');
+        });
+    };
+});
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
