@@ -1,147 +1,91 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <!-- Include FontAwesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <style>
-        /* Add your styles here */
-    </style>
-</head>
-<body>
-    <span class="user-name" id="MDMUserName"> </span>
-    <button id="bookmarkBtn" class="bookmark-btn" style="float: right;"><i class="fa fa-book"></i>Bookmark</button>
-    <div id="bookmarkModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Add Bookmark</h2>
-            <form id="bookmarkForm">
-                <!-- Form contents here -->
-            </form>
-        </div>
-    </div>
-    <div id="bookmarksModal" class="bookmarks-modal">
-        <div class="bookmarks-modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Saved Bookmarks</h2>
-            <table class="bookmarks-list">
-                <thead>
-                    <tr>
-                        <th>Bookmark Name</th>
-                        <th>Clients</th>
-                        <th>Products</th>
-                        <th>Client Segments</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="bookmarksList">
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <!-- Table to display filtered data -->
-    <div id="filteredDataSection">
-        <h2>Filtered Data</h2>
-        <table id="filteredDataTable">
-            <thead>
-                <tr>
-                    <th>IBC Name</th>
-                    <th>ProductLink</th>
-                    <th>Client Segment</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
-    </div>
-    <script>
-        // Your existing JavaScript here
-        require(["js/qlik"], function(qlik) {
-            var app = qlik.openApp('YOUR_APP_ID'); // Replace with your actual app ID
+require(["js/qlik"], function(qlik) {
+    var app = qlik.openApp('XYZ'); // Replace 'XYZ' with your actual app ID
 
-            document.getElementById('bookmarkBtn').addEventListener('click', function () {
-                document.getElementById('bookmarkModal').style.display = 'block';
-            });
+    document.getElementById('bookmarkBtn').addEventListener('click', function () {
+        document.getElementById('bookmarkModal').style.display = 'block';
+    });
 
-            document.querySelectorAll('.close-button').forEach(button => {
-                button.addEventListener('click', function () {
-                    this.parentElement.parentElement.style.display = 'none';
-                });
-            });
-
-            var myField = app.field("IBC Name").getData();
-            myField.OnData.bind(function() {
-                myField.rows.forEach(function(row) {
-                    var option = document.createElement("option");
-                    option.value = row.qText;
-                    option.text = row.qText;
-                    document.getElementById("client").appendChild(option);
-                });
-            });
-
-            var myField1 = app.field("ProductLink").getData();
-            myField1.OnData.bind(function() {
-                myField1.rows.forEach(function(row) {
-                    var option = document.createElement("option");
-                    option.value = row.qText;
-                    option.text = row.qText;
-                    document.getElementById("product").appendChild(option);
-                });
-            });
-
-            var myField2 = app.field("Client Segment").getData();
-            myField2.OnData.bind(function() {
-                myField2.rows.forEach(function(row) {
-                    var option = document.createElement("option");
-                    option.value = row.qText;
-                    option.text = row.qText;
-                    document.getElementById("clientSegment").appendChild(option);
-                });
-            });
-
-            window.testVariable = function(bookmarkId) {
-                const bookmarkRow = document.querySelector(`button[onclick="testVariable(${bookmarkId})"]`).closest('tr');
-                const clients = bookmarkRow.cells[1].textContent.split(', ');
-                
-                app.field("IBC Name").selectValues(clients.map(client => ({ qText: client })), true, true)
-                .then(() => {
-                    return app.createCube({
-                        qDimensions: [
-                            { qDef: { qFieldDefs: ["IBC Name"] } },
-                            { qDef: { qFieldDefs: ["ProductLink"] } },
-                            { qDef: { qFieldDefs: ["Client Segment"] } }
-                        ],
-                        qMeasures: [],
-                        qInitialDataFetch: [{
-                            qTop: 0,
-                            qHeight: 100,
-                            qWidth: 3
-                        }]
-                    });
-                })
-                .then(hypercube => {
-                    if (hypercube.qHyperCube.qDataPages.length > 0) {
-                        const matrix = hypercube.qHyperCube.qDataPages[0].qMatrix;
-                        const tableBody = document.getElementById('filteredDataTable').querySelector('tbody');
-                        tableBody.innerHTML = '';
-                        matrix.forEach(row => {
-                            const tr = document.createElement('tr');
-                            row.forEach(cell => {
-                                const td = document.createElement('td');
-                                td.textContent = cell.qText;
-                                tr.appendChild(td);
-                            });
-                            tableBody.appendChild(tr);
-                        });
-                    } else {
-                        console.error('Hypercube data pages are empty.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error selecting clients or fetching data:', error);
-                    alert('Error selecting clients or fetching data.');
-                });
-            };
+    document.querySelectorAll('.close-button').forEach(button => {
+        button.addEventListener('click', function () {
+            this.parentElement.parentElement.style.display = 'none';
         });
-    </script>
-</body>
-</html>
+    });
+
+    var myField = app.field("IBC Name").getData();
+    myField.OnData.bind(function() {
+        myField.rows.forEach(function(row) {
+            var option = document.createElement("option");
+            option.value = row.qText;
+            option.text = row.qText;
+            document.getElementById("client").appendChild(option);
+        });
+    });
+
+    var myField1 = app.field("ProductLink").getData();
+    myField1.OnData.bind(function() {
+        myField1.rows.forEach(function(row) {
+            var option = document.createElement("option");
+            option.value = row.qText;
+            option.text = row.qText;
+            document.getElementById("product").appendChild(option);
+        });
+    });
+
+    var myField2 = app.field("Client Segment").getData();
+    myField2.OnData.bind(function() {
+        myField2.rows.forEach(function(row) {
+            var option = document.createElement("option");
+            option.value = row.qText;
+            option.text = row.qText;
+            document.getElementById("clientSegment").appendChild(option);
+        });
+    });
+
+    window.testVariable = function(bookmarkId) {
+        console.log('Test Variable clicked for bookmark ID:', bookmarkId);
+        const bookmarkRow = document.querySelector(`button[onclick="testVariable(${bookmarkId})"]`).closest('tr');
+        const clients = bookmarkRow.cells[1].textContent.split(', ');
+        console.log('Clients:', clients);
+
+        // Clear previous selections and select new clients
+        app.field("IBC Name").clear().then(() => {
+            return app.field("IBC Name").selectValues(
+                clients.map(client => ({ qText: client })),
+                true,  // toggle
+                true   // soft lock
+            );
+        }).then(() => {
+            console.log('Clients selected:', clients);
+            // Update the existing table with the filtered data
+            updateTableWithFilteredData();
+        }).catch(err => {
+            console.error('Error selecting clients or fetching data:', err);
+            alert('Error selecting clients or fetching data.');
+        });
+    };
+
+    function updateTableWithFilteredData() {
+        app.getObject('table_custom_DJPtJk', 'DJPtJK').then(model => {
+            model.getLayout().then(layout => {
+                const table = document.getElementById('table_custom_DJPtJk');
+                table.innerHTML = ''; // Clear existing table data
+                
+                layout.qHyperCube.qDataPages[0].qMatrix.forEach(row => {
+                    const tr = document.createElement('tr');
+                    row.forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell.qText || '-';
+                        tr.appendChild(td);
+                    });
+                    table.appendChild(tr);
+                });
+            }).catch(err => {
+                console.error('Error getting layout:', err);
+                alert('Error getting layout.');
+            });
+        }).catch(err => {
+            console.error('Error getting object:', err);
+            alert('Error getting object.');
+        });
+    }
+});
