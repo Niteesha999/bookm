@@ -1,3 +1,99 @@
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)  # Enable Cross-Origin Resource Sharing
+
+# Replace the following with your actual database URI
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mssql+pyodbc://username:password@server/dbname?driver=SQL+Server'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+class Bookmark(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    bookmark_name = db.Column(db.String(100), nullable=False)
+    client = db.Column(db.String, nullable=False)
+    product = db.Column(db.String, nullable=False)
+    client_segment = db.Column(db.String, nullable=False)
+    username = db.Column(db.String(100), nullable=False)
+
+@app.route('/bookmarks', methods=['GET'])
+def get_bookmarks():
+    bookmarks = Bookmark.query.all()
+    return jsonify([{
+        'id': bookmark.id,
+        'bookmarkName': bookmark.bookmark_name,
+        'client': bookmark.client.split(', '),
+        'product': bookmark.product.split(', '),
+        'clientSegment': bookmark.client_segment.split(', ')
+    } for bookmark in bookmarks])
+
+@app.route('/bookmarks/<int:id>', methods=['GET'])
+def get_bookmark(id):
+    bookmark = Bookmark.query.get(id)
+    if not bookmark:
+        return jsonify({'message': 'Bookmark not found'}), 404
+    return jsonify({
+        'id': bookmark.id,
+        'bookmarkName': bookmark.bookmark_name,
+        'client': bookmark.client.split(', '),
+        'product': bookmark.product.split(', '),
+        'clientSegment': bookmark.client_segment.split(', ')
+    })
+
+@app.route('/save', methods=['POST'])
+def save_bookmark():
+    data = request.json
+    bookmark = Bookmark(
+        bookmark_name=data['bookmarkName'],
+        client=', '.join(data['client']),
+        product=', '.join(data['product']),
+        client_segment=', '.join(data['clientSegment']),
+        username=data['username']
+    )
+    db.session.add(bookmark)
+    db.session.commit()
+    return jsonify({'message': 'Bookmark saved successfully'})
+
+@app.route('/update/<int:id>', methods=['PUT'])
+def update_bookmark(id):
+    data = request.json
+    bookmark = Bookmark.query.get(id)
+    if not bookmark:
+        return jsonify({'message': 'Bookmark not found'}), 404
+    bookmark.bookmark_name = data['bookmarkName']
+    bookmark.client = ', '.join(data['client'])
+    bookmark.product = ', '.join(data['product'])
+    bookmark.client_segment = ', '.join(data['clientSegment'])
+    bookmark.username = data['username']
+    db.session.commit()
+    return jsonify({'message': 'Bookmark updated successfully'})
+
+@app.route('/delete/<int:id>', methods=['DELETE'])
+def delete_bookmark(id):
+    bookmark = Bookmark.query.get(id)
+    if not bookmark:
+        return jsonify({'message': 'Bookmark not found'}), 404
+    db.session.delete(bookmark)
+    db.session.commit()
+    return jsonify({'message': 'Bookmark deleted successfully'})
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+
+
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
