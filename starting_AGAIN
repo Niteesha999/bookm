@@ -1,3 +1,58 @@
+window.testVariable = function(bookmarkId) {
+    console.log('Test Variable clicked for bookmark ID:', bookmarkId);
+    const bookmarkRow = document.querySelector(`button[onclick="testVariable(${bookmarkId})"]`).closest('tr');
+    const clients = bookmarkRow.cells[1].textContent.split(', ').map(client => ({ qText: client }));
+    console.log('Clients:', clients);
+
+    // Hardcode a client name for testing
+    app.field('IBC Name').selectValues([{ qText: 'HardcodedClientName' }], true)
+        .then(() => {
+            return app.createCube({
+                qDimensions: [
+                    { qDef: { qFieldDefs: ["IBC Name"] } },
+                    { qDef: { qFieldDefs: ["ProductLink"] } },
+                    { qDef: { qFieldDefs: ["Client Segment"] } }
+                ],
+                qMeasures: [],
+                qInitialDataFetch: [{
+                    qTop: 0,
+                    qLeft: 0,
+                    qHeight: 100,
+                    qWidth: 3
+                }]
+            });
+        })
+        .then(hypercube => {
+            console.log('Hypercube:', hypercube);
+            if (hypercube && hypercube.qHyperCube && hypercube.qHyperCube.qDataPages) {
+                const matrix = hypercube.qHyperCube.qDataPages[0].qMatrix;
+                const tableBody = document.getElementById('filteredDataTable').querySelector('tbody');
+                tableBody.innerHTML = '';
+                matrix.forEach(row => {
+                    const tr = document.createElement('tr');
+                    row.forEach(cell => {
+                        const td = document.createElement('td');
+                        td.textContent = cell.qText;
+                        tr.appendChild(td);
+                    });
+                    tableBody.appendChild(tr);
+                });
+            } else {
+                console.error('Hypercube data pages are not defined:', hypercube);
+            }
+        })
+        .catch(error => {
+            console.error('Error selecting clients or fetching data:', error);
+            alert('Error selecting clients or fetching data.');
+        });
+};
+
+
+
+
+
+
+
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
