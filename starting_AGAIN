@@ -80,7 +80,8 @@
   </div>
   <div class="container">
     <div class="row">
-      <div class="col-sm-12 qvobject" id="QV01"></div>
+      <!-- Use the placeholder id where your Qlik object is rendered -->
+      <div class="col-sm-12 qvobject" id="11111"></div>
     </div>
   </div>
   <!-- Bootstrap Modals -->
@@ -234,9 +235,6 @@
           }
         });
       });
-
-      // Open app objects
-      app.getObject('QV01', 'your-object-id');
     });
   </script>
 </body>
