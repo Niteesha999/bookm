@@ -1,0 +1,511 @@
+Bookmark Functionality in Qlik Sense Application
+
+This documentation outlines the steps taken to create and manage bookmarks within a Qlik Sense
+
+application. 
+
+The bookmark functionality allows users to save specific selections of dropdowns for Client, Product,
+
+and Client Segment fields, and retrieve or test these selections at a later time.
+
+Components
+
+1. HTML and CSS
+
+2. JavaScript Logic
+
+3. Integration with Qlik Sense API
+
+1. HTML and CSS
+
+The HTML structure includes the main bookmark button, modal forms for adding bookmarks, and a
+
+table to display saved bookmarks.
+
+Placeholder for HTML and CSS code
+
+2. JavaScript Logic
+
+JavaScript is used to manage bookmark creation, update, delete, and retrieval. 
+
+It also handles filtering dropdown options and updating the selected lists dynamically.
+
+Placeholder for JavaScript code
+
+3. Integration with Qlik Sense API
+
+The Qlik Sense API is used to fetch field data for the dropdowns and to handle the selection and
+
+filtering of data based on the saved bookmarks.
+
+### Fetching Field Data
+
+The Qlik Sense API is used to populate the dropdowns with data from the fields `IBC Name`,
+
+`ProductLink`, and `Client Segment`.
+
+### Managing Selections
+
+When a bookmark is saved, the selected values from the dropdowns are stored. When the
+
+bookmark is tested, these values are used to filter the data in the Qlik Sense application.
+
+### Example API Calls
+
+- Fetching field data: `app.field("IBC Name").getData()`
+
+- Selecting values: `app.field("IBC Name").selectValues([...])`
+
+### Integration Points
+
+- The `selectValues` method is used to apply the selections from a bookmark to the Qlik Sense
+
+application.
+
+- The `createCube` method is used to fetch the filtered data and display it on the webpage.
+
+Placeholder for Qlik Sense API integration code
+
+Pending Task
+
+The apply functionality for filtering the Qlik Sense data based on the saved bookmark selections is
+
+pending. 
+
+While we can save and retrieve the bookmark selections, automatically applying these selections to
+
+filter the data is still in progress.
+
+
+
+
+Sure, here is a detailed documentation of the bookmark functionality, including technical details and information about Python and Flask integration:
+
+---
+
+# Bookmark Functionality Documentation
+
+## Overview
+
+This document describes the bookmark functionality implemented in the web application, including the front-end and back-end components. The bookmark functionality allows users to save, view, edit, delete, and test bookmarks. Each bookmark stores selected values from dropdowns representing "Client", "Product", and "Client Segment" fields from a Qlik Sense app. 
+
+## Front-end Implementation
+
+### HTML Structure
+
+The front-end consists of an HTML form with dropdowns for selecting "Client", "Product", and "Client Segment". Each dropdown is populated with values from the Qlik Sense app. The form allows users to save bookmarks, view saved bookmarks, and test bookmarks by applying the selected values to the Qlik Sense app.
+
+#### Bookmark Form
+```html
+<form id="bookmarkForm">
+    <div class="form-group">
+        <label for="bookmarkName">Bookmark Name:</label>
+        <input type="text" id="bookmarkName" name="bookmarkName" required>
+    </div>
+    <div class="form-group">
+        <label for="client">Client:</label>
+        <input type="text" id="clientSearch" placeholder="Search clients" onkeyup="filterOptions('client', 'clientSearch')">
+        <br><br>
+        <select id="client" name="client" multiple onchange="updateSelectedList('client', 'selectedClients')"></select>
+        <div id="selectedClients" class="selected-list"></div>
+    </div>
+    <div class="form-group">
+        <label for="product">Product:</label>
+        <input type="text" id="productSearch" placeholder="Search products" onkeyup="filterOptions('product', 'productSearch')">
+        <br><br>
+        <select id="product" name="product" multiple onchange="updateSelectedList('product', 'selectedProducts')"></select>
+        <div id="selectedProducts" class="selected-list"></div>
+    </div>
+    <div class="form-group">
+        <label for="clientSegment">Client Segment:</label>
+        <input type="text" id="clientSegmentSearch" placeholder="Search client segments" onkeyup="filterOptions('clientSegment', 'clientSegmentSearch')">
+        <br><br>
+        <select id="clientSegment" name="clientSegment" multiple onchange="updateSelectedList('clientSegment', 'selectedClientSegments')"></select>
+        <div id="selectedClientSegments" class="selected-list"></div>
+    </div>
+    <input type="hidden" id="editIndex" value="">
+    <input type="hidden" id="bookmarkId" value="">
+    <button type="submit" class="save-btn">Save</button>
+    <button type="button" class="view-bookmarks-btn" onclick="viewSavedBookmarks()">Saved Bookmarks</button>
+    <input type="reset" value="Reset">
+</form>
+```
+
+### JavaScript Functions
+
+#### Populating Dropdowns
+- Fetch values from Qlik Sense app fields and populate dropdowns.
+- Use the `qlik` library to interact with the Qlik Sense app.
+- Example:
+  ```javascript
+  require(["js/qlik"], function(qlik) {
+      var app = qlik.openApp('YOUR_APP_ID');
+      var myField = app.field("IBC Name").getData();
+      myField.OnData.bind(function() {
+          myField.rows.forEach(function(row) {
+              var option = document.createElement("option");
+              option.value = row.qText;
+              option.text = row.qText;
+              document.getElementById("client").appendChild(option);
+          });
+      });
+  });
+  ```
+
+#### Saving Bookmarks
+- Collect selected values and send them to the back-end API to save in the database.
+- Example:
+  ```javascript
+  document.getElementById('bookmarkForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const bookmarkName = document.getElementById('bookmarkName').value;
+      const client = Array.from(document.getElementById('client').selectedOptions).map(option => option.value);
+      const product = Array.from(document.getElementById('product').selectedOptions).map(option => option.value);
+      const clientSegment = Array.from(document.getElementById('clientSegment').selectedOptions).map(option => option.value);
+      const bookmark = { bookmarkName, client, product, clientSegment };
+      fetch('http://localhost:5000/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bookmark),
+      }).then(response => response.json()).then(data => {
+          alert(data.message);
+          viewSavedBookmarks();
+      }).catch((error) => {
+          console.error('Error:', error);
+      });
+  });
+  ```
+
+#### Viewing Saved Bookmarks
+- Fetch saved bookmarks from the back-end API and display them in a table.
+- Example:
+  ```javascript
+  function viewSavedBookmarks() {
+      fetch('http://localhost:5000/bookmarks')
+      .then(response => response.json())
+      .then(data => {
+          const listElement = document.getElementById('bookmarksList');
+          listElement.innerHTML = '';
+          data.forEach(bookmark => {
+              const row = document.createElement('tr');
+              row.innerHTML = `<td>${bookmark.bookmarkName}</td>
+                  <td>${bookmark.client ? bookmark.client.join(', ') : 'N/A'}</td>
+                  <td>${bookmark.product ? bookmark.product.join(', ') : 'N/A'}</td>
+                  <td>${bookmark.clientSegment ? bookmark.clientSegment.join(', ') : 'N/A'}</td>
+                  <td>
+                      <div class="action-buttons">
+                          <button class="edit-btn" onclick="editBookmark(${bookmark.id}, '${bookmark.bookmarkName}', '${bookmark.client.join(', ')}', '${bookmark.product.join(', ')}', '${bookmark.clientSegment.join(', ')}')">Edit</button>
+                          <button class="delete-btn" onclick="deleteBookmark(${bookmark.id})">Delete</button>
+                          <button class="test-variable-btn" onclick="testVariable(${bookmark.id})">Test Variable</button>
+                      </div>
+                  </td>`;
+              listElement.appendChild(row);
+          });
+      })
+      .catch((error) => {
+          console.error('Error:', error);
+      });
+  }
+  ```
+
+#### Testing Bookmarks
+- Apply the selected values from a bookmark to the Qlik Sense app.
+- Example:
+  ```javascript
+  window.testVariable = function(bookmarkId) {
+      const bookmarkRow = document.querySelector(`button[onclick="testVariable(${bookmarkId})"]`).closest('tr');
+      const clients = bookmarkRow.cells[1].textContent.split(', ');
+      app.field('IBC Name').selectValues(clients.map(client => ({ qText: client })), true, true);
+  };
+  ```
+
+## Back-end Implementation
+
+### Python and Flask Integration
+
+#### Flask API Endpoints
+- `POST /save`: Save a new bookmark.
+- `GET /bookmarks`: Get all saved bookmarks.
+- `PUT /update/<id>`: Update an existing bookmark.
+- `DELETE /delete/<id>`: Delete a bookmark.
+
+#### Example Flask Code
+```python
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bookmarks.db'
+db = SQLAlchemy(app)
+
+class Bookmark(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    bookmarkName = db.Column(db.String(100), nullable=False)
+    client = db.Column(db.PickleType, nullable=False)
+    product = db.Column(db.PickleType, nullable=False)
+    clientSegment = db.Column(db.PickleType, nullable=False)
+
+@app.route('/save', methods=['POST'])
+def save_bookmark():
+    data = request.get_json()
+    new_bookmark = Bookmark(
+        bookmarkName=data['bookmarkName'],
+        client=data['client'],
+        product=data['product'],
+        clientSegment=data['clientSegment']
+    )
+    db.session.add(new_bookmark)
+    db.session.commit()
+    return jsonify({"message": "Bookmark saved successfully"}), 201
+
+@app.route('/bookmarks', methods=['GET'])
+def get_bookmarks():
+    bookmarks = Bookmark.query.all()
+    bookmarks_list = [{
+        "id": bookmark.id,
+        "bookmarkName": bookmark.bookmarkName,
+        "client": bookmark.client,
+        "product": bookmark.product,
+        "clientSegment": bookmark.clientSegment
+    } for bookmark in bookmarks]
+    return jsonify(bookmarks_list)
+
+@app.route('/update/<id>', methods=['PUT'])
+def update_bookmark(id):
+    data = request.get_json()
+    bookmark = Bookmark.query.get(id)
+    if not bookmark:
+        return jsonify({"message": "Bookmark not found"}), 404
+    bookmark.bookmarkName = data['bookmarkName']
+    bookmark.client = data['client']
+    bookmark.product = data['product']
+    bookmark.clientSegment = data['clientSegment']
+    db.session.commit()
+    return jsonify({"message": "Bookmark updated successfully"}), 200
+
+@app.route('/delete/<id>', methods=['DELETE'])
+def delete_bookmark(id):
+    bookmark = Bookmark.query.get(id)
+    if not bookmark:
+        return jsonify({"message": "Bookmark not found"}), 404
+    db.session.delete(bookmark)
+    db.session.commit()
+    return jsonify({"message": "Bookmark deleted successfully"}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+### Database Schema
+- Table: `Bookmark`
+  - `id`: Integer, Primary Key
+  - `
+
+Sure, I will complete the rest of the documentation and generate a PDF.
+
+### Database Schema
+- Table: `Bookmark`
+  - `id`: Integer, Primary Key
+  - `bookmarkName`: String, Name of the bookmark
+  - `client`: PickleType, List of selected clients
+  - `product`: PickleType, List of selected products
+  - `clientSegment`: PickleType, List of selected client segments
+
+### Setting Up the Database
+```python
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bookmarks.db'
+db = SQLAlchemy(app)
+
+class Bookmark(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    bookmarkName = db.Column(db.String(100), nullable=False)
+    client = db.Column(db.PickleType, nullable=False)
+    product = db.Column(db.PickleType, nullable=False)
+    clientSegment = db.Column(db.PickleType, nullable=False)
+
+db.create_all()
+```
+
+### Explanation of Bookmark Functionality
+1. **Front-end Implementation**:
+   - **HTML Form**: A form with dropdowns for selecting clients, products, and client segments. The dropdowns are populated from the Qlik Sense app.
+   - **JavaScript Functions**:
+     - `filterOptions()`: Filters options in the dropdowns based on user input.
+     - `updateSelectedList()`: Updates the list of selected options for each dropdown.
+     - `viewSavedBookmarks()`: Fetches and displays saved bookmarks.
+     - `saveBookmark()`: Saves a new bookmark.
+     - `updateBookmark()`: Updates an existing bookmark.
+     - `deleteBookmark()`: Deletes a bookmark.
+     - `testVariable()`: Applies the selected values from a bookmark to the Qlik Sense app.
+
+2. **Back-end Implementation**:
+   - **Flask API Endpoints**:
+     - `POST /save`: Saves a new bookmark.
+     - `GET /bookmarks`: Gets all saved bookmarks.
+     - `PUT /update/<id>`: Updates an existing bookmark.
+     - `DELETE /delete/<id>`: Deletes a bookmark.
+   - **Database Schema**: A table named `Bookmark` with columns for the bookmark name, selected clients, products, and client segments.
+   - **Setting Up the Database**: Creating the `Bookmark` table and initializing the database.
+
+### Future Work
+- **Apply Functionality**: The next step is to implement the functionality to apply the saved bookmark selections to filter the Qlik Sense app data.
+
+## Conclusion
+This document provides a comprehensive overview of the bookmark functionality implemented in the web application. The functionality includes saving, viewing, editing, deleting, and testing bookmarks. The document also covers the integration with Python and Flask for back-end support and provides a detailed explanation of the front-end and back-end components.
+
+---
+
+I will now generate this documentation as a PDF.
+
+
+
+
+It seems I hit the character limit for string literals. Let's break the process into smaller parts and combine them later to generate the PDF.
+
+### JavaScript Functions (continued)
+```javascript
+- Apply the selected values from a bookmark to the Qlik Sense app.
+- Example:
+```javascript
+window.testVariable = function(bookmarkId) {
+    const bookmarkRow = document.querySelector(`button[onclick="testVariable(${bookmarkId})"]`).closest('tr');
+    const clients = bookmarkRow.cells[1].textContent.split(', ');
+    app.field('IBC Name').selectValues(clients.map(client => ({ qText: client })), true, true);
+};
+```
+```
+
+### Back-end Implementation
+
+#### Flask API Endpoints
+- `POST /save`: Save a new bookmark.
+- `GET /bookmarks`: Get all saved bookmarks.
+- `PUT /update/<id>`: Update an existing bookmark.
+- `DELETE /delete/<id>`: Delete a bookmark.
+
+#### Example Flask Code
+```python
+from flask import Flask, request, jsonify
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bookmarks.db'
+db = SQLAlchemy(app)
+
+class Bookmark(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    bookmarkName = db.Column(db.String(100), nullable=False)
+    client = db.Column(db.PickleType, nullable=False)
+    product = db.Column(db.PickleType, nullable=False)
+    clientSegment = db.Column(db.PickleType, nullable=False)
+
+@app.route('/save', methods=['POST'])
+def save_bookmark():
+    data = request.get_json()
+    new_bookmark = Bookmark(
+        bookmarkName=data['bookmarkName'],
+        client=data['client'],
+        product=data['product'],
+        clientSegment=data['clientSegment']
+    )
+    db.session.add(new_bookmark)
+    db.session.commit()
+    return jsonify({"message": "Bookmark saved successfully"}), 201
+
+@app.route('/bookmarks', methods=['GET'])
+def get_bookmarks():
+    bookmarks = Bookmark.query.all()
+    bookmarks_list = [{
+        "id": bookmark.id,
+        "bookmarkName": bookmark.bookmarkName,
+        "client": bookmark.client,
+        "product": bookmark.product,
+        "clientSegment": bookmark.clientSegment
+    } for bookmark in bookmarks]
+    return jsonify(bookmarks_list)
+
+@app.route('/update/<id>', methods=['PUT'])
+def update_bookmark(id):
+    data = request.get_json()
+    bookmark = Bookmark.query.get(id)
+    if not bookmark:
+        return jsonify({"message": "Bookmark not found"}), 404
+    bookmark.bookmarkName = data['bookmarkName']
+    bookmark.client = data['client']
+    bookmark.product = data['product']
+    bookmark.clientSegment = data['clientSegment']
+    db.session.commit()
+    return jsonify({"message": "Bookmark updated successfully"}), 200
+
+@app.route('/delete/<id>', methods=['DELETE'])
+def delete_bookmark(id):
+    bookmark = Bookmark.query.get(id)
+    if not bookmark:
+        return jsonify({"message": "Bookmark not found"}), 404
+    db.session.delete(bookmark)
+    db.session.commit()
+    return jsonify({"message": "Bookmark deleted successfully"}), 200
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+### Database Schema
+- Table: `Bookmark`
+  - `id`: Integer, Primary Key
+  - `bookmarkName`: String, Name of the bookmark
+  - `client`: PickleType, List of selected clients
+  - `product`: PickleType, List of selected products
+  - `clientSegment`: PickleType, List of selected client segments
+
+### Setting Up the Database
+```python
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///bookmarks.db'
+db = SQLAlchemy(app)
+
+class Bookmark(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    bookmarkName = db.Column(db.String(100), nullable=False)
+    client = db.Column(db.PickleType, nullable=False)
+    product = db.Column(db.PickleType, nullable=False)
+    clientSegment = db.Column(db.PickleType, nullable=False)
+
+db.create_all()
+```
+
+### Explanation of Bookmark Functionality
+1. **Front-end Implementation**:
+   - **HTML Form**: A form with dropdowns for selecting clients, products, and client segments. The dropdowns are populated from the Qlik Sense app.
+   - **JavaScript Functions**:
+     - `filterOptions()`: Filters options in the dropdowns based on user input.
+     - `updateSelectedList()`: Updates the list of selected options for each dropdown.
+     - `viewSavedBookmarks()`: Fetches and displays saved bookmarks.
+     - `saveBookmark()`: Saves a new bookmark.
+     - `updateBookmark()`: Updates an existing bookmark.
+     - `deleteBookmark()`: Deletes a bookmark.
+     - `testVariable()`: Applies the selected values from a bookmark to the Qlik Sense app.
+
+2. **Back-end Implementation**:
+   - **Flask API Endpoints**:
+     - `POST /save`: Saves a new bookmark.
+     - `GET /bookmarks`: Gets all saved bookmarks.
+     - `PUT /update/<id>`: Updates an existing bookmark.
+     - `DELETE /delete/<id>`: Deletes a bookmark.
+   - **Database Schema**: A table named `Bookmark` with columns for the bookmark name, selected clients, products, and client segments.
+   - **Setting Up the Database**: Creating the `Bookmark` table and initializing the database.
+
+### Future Work
+- **Apply Functionality**: The next step is to implement the functionality to apply the saved bookmark selections to filter the Qlik Sense app data.
+
+## Conclusion
+This document provides a comprehensive overview of the bookmark functionality implemented in the web application. The functionality includes saving, viewing, editing, deleting, and testing bookmarks. The document also covers the integration with Python and Flask for back-end support and provides a detailed explanation of the front-end and back-end components.
+
+---
+
+I will now combine this content and generate a PDF.
