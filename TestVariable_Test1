@@ -1,3 +1,190 @@
+In Qlik Sense, the `getObject` method is used to retrieve a visualization object (like a table, chart, etc.) from the Qlik app. This allows you to access its properties, data, and structure. By using `getObject`, we can get the hypercube data associated with a table visualization to display it in our modal.
+
+Here’s a step-by-step explanation of the rationale behind using `getObject`:
+
+1. **Retrieve the Visualization Object**:
+   - The `getObject` function allows us to fetch a specific visualization by its ID from the Qlik app. This is essential to access the data contained within that object.
+   
+2. **Access the Hypercube Data**:
+   - Once we have the visualization object, we can access its layout, which contains the hypercube. The hypercube holds the actual data displayed in the table or chart. By accessing the hypercube data, we can extract the rows and columns of data and display them in our custom modal.
+
+3. **Display the Filtered Data**:
+   - After fetching the hypercube data, we can process it to display in our custom HTML table. This approach ensures we are displaying the most up-to-date data that matches the filters applied through the dropdowns.
+
+### Revised Approach to Ensure Proper Functionality:
+
+To ensure proper functionality, let's use `getObject` to retrieve the visualization data and then display it in the modal. Here's the revised approach:
+
+1. **Retrieve the Visualization Object**:
+   - Use `getObject` to retrieve the table visualization by its ID.
+   - Access the layout of the visualization to get the hypercube data.
+
+2. **Display the Filtered Data**:
+   - Process the hypercube data and display it in a modal.
+
+### Modified Code with Explanation:
+
+Here's how you can modify the existing code:
+
+1. **HTML for Modal**:
+   - Ensure you have the modal structure in place.
+
+   ```html
+   <div id="filteredDataModal" class="modal">
+       <div class="modal-content">
+           <span class="close-button" onclick="closeFilteredDataModal()">&times;</span>
+           <h2>Filtered Data</h2>
+           <div id="filteredDataContainer"></div> <!-- Container to display filtered data -->
+       </div>
+   </div>
+   ```
+
+2. **CSS for Modal**:
+   - Add styles for the modal.
+
+   ```css
+   .modal {
+       display: none; /* Hidden by default */
+       position: fixed; /* Stay in place */
+       z-index: 1; /* Sit on top */
+       left: 0;
+       top: 0;
+       width: 100%; /* Full width */
+       height: 100%; /* Full height */
+       overflow: auto; /* Enable scroll if needed */
+       background-color: rgb(0,0,0); /* Fallback color */
+       background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+   }
+
+   .modal-content {
+       background-color: #fefefe;
+       margin: 15% auto; /* 15% from the top and centered */
+       padding: 20px;
+       border: 1px solid #888;
+       width: 80%; /* Could be more or less, depending on screen size */
+   }
+
+   .close-button {
+       color: #aaa;
+       float: right;
+       font-size: 28px;
+       font-weight: bold;
+   }
+
+   .close-button:hover,
+   .close-button:focus {
+       color: black;
+       text-decoration: none;
+       cursor: pointer;
+   }
+   ```
+
+3. **JavaScript to Open and Close Modal**:
+   - Add functions to open and close the modal.
+
+   ```javascript
+   function openFilteredDataModal() {
+       document.getElementById('filteredDataModal').style.display = 'block';
+   }
+
+   function closeFilteredDataModal() {
+       document.getElementById('filteredDataModal').style.display = 'none';
+   }
+   ```
+
+4. **Modify the `fetchFilteredData` and `displayFilteredData` Functions**:
+   - Ensure these functions update the modal content and then open it.
+
+   ```javascript
+   function fetchFilteredData() {
+       app.getObject('DJPtJK').then(model => {
+           model.getLayout().then(layout => {
+               let hypercube = layout.qHyperCube;
+               let qData = hypercube.qDataPages[0].qMatrix;
+               displayFilteredData(qData);
+           }).catch(error => {
+               console.error('Error fetching layout:', error);
+               alert('Error fetching layout');
+           });
+       }).catch(error => {
+           console.error('Error getting object:', error);
+           alert('Error getting object');
+       });
+   }
+
+   function displayFilteredData(qData) {
+       let container = document.getElementById('filteredDataContainer');
+       container.innerHTML = ''; // Clear previous content
+
+       let table = document.createElement('table');
+       table.className = 'bookmarks-list'; // Reuse existing table styles
+
+       // Add table headers
+       let thead = document.createElement('thead');
+       thead.innerHTML = `<tr>
+           <th>IBC Name</th>
+           <th>ProductLink</th>
+           <th>Client Segment</th>
+           <!-- Add other necessary headers -->
+       </tr>`;
+       table.appendChild(thead);
+
+       // Add table rows
+       let tbody = document.createElement('tbody');
+       qData.forEach(row => {
+           let tr = document.createElement('tr');
+           tr.innerHTML = `
+               <td>${row[0].qText}</td>
+               <td>${row[1].qText}</td>
+               <td>${row[2].qText}</td>
+               <!-- Add other necessary fields -->
+           `;
+           tbody.appendChild(tr);
+       });
+       table.appendChild(tbody);
+
+       container.appendChild(table);
+       openFilteredDataModal();
+   }
+
+   window.testVariable = function(bookmarkId) {
+       console.log('Test Variable clicked for bookmark ID:', bookmarkId);
+       const bookmarkRow = document.querySelector(`button[onclick="testVariable(${bookmarkId})"]`).closest('tr');
+       const clients = bookmarkRow.cells[1].textContent.split(', ');
+       console.log('Clients:', clients);
+       app.field('IBC Name').selectValues(clients.map(client => ({ qText: client })), false, true).then(() => {
+           console.log('Clients selected successfully');
+           fetchFilteredData(); // Fetch and display filtered data in the modal
+       }).catch(error => {
+           console.error('Error selecting clients:', error);
+           alert('Error selecting clients');
+       });
+   };
+   ```
+
+With these changes, clicking the "Test Variable" button should trigger the filtering of the table based on the selected clients and display the filtered data in a modal. The use of `getObject` ensures that we are retrieving the correct visualization and its data from the Qlik app.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
