@@ -1,643 +1,192 @@
-In Qlik Sense, the `getObject` method is used to retrieve a visualization object (like a table, chart, etc.) from the Qlik app. This allows you to access its properties, data, and structure. By using `getObject`, we can get the hypercube data associated with a table visualization to display it in our modal.
+Yes, we can make a call to the Qlik app and work with the data directly without using an object ID. We can use the `app.createCube` method to define a hypercube structure and retrieve data based on field selections.
 
-Here’s a step-by-step explanation of the rationale behind using `getObject`:
+Here's how you can do it:
 
-1. **Retrieve the Visualization Object**:
-   - The `getObject` function allows us to fetch a specific visualization by its ID from the Qlik app. This is essential to access the data contained within that object.
-   
-2. **Access the Hypercube Data**:
-   - Once we have the visualization object, we can access its layout, which contains the hypercube. The hypercube holds the actual data displayed in the table or chart. By accessing the hypercube data, we can extract the rows and columns of data and display them in our custom modal.
+1. Define a hypercube to retrieve the data from the fields.
+2. Use `app.createCube` to create the hypercube and fetch the data.
+3. Display the filtered data in a modal.
 
-3. **Display the Filtered Data**:
-   - After fetching the hypercube data, we can process it to display in our custom HTML table. This approach ensures we are displaying the most up-to-date data that matches the filters applied through the dropdowns.
+### Updated Approach:
 
-### Revised Approach to Ensure Proper Functionality:
+1. **Define a Hypercube**:
+   - Create a hypercube to fetch data based on the selected client values.
 
-To ensure proper functionality, let's use `getObject` to retrieve the visualization data and then display it in the modal. Here's the revised approach:
+2. **Update the `testVariable` Function**:
+   - Select client values and fetch data using the defined hypercube.
 
-1. **Retrieve the Visualization Object**:
-   - Use `getObject` to retrieve the table visualization by its ID.
-   - Access the layout of the visualization to get the hypercube data.
+3. **Display Data**:
+   - Show the filtered data in a modal.
 
-2. **Display the Filtered Data**:
-   - Process the hypercube data and display it in a modal.
+### Modifications:
 
-### Modified Code with Explanation:
+#### Define Hypercube and Update Function
 
-Here's how you can modify the existing code:
+Add the following JavaScript to your existing script:
 
-1. **HTML for Modal**:
-   - Ensure you have the modal structure in place.
+```javascript
+require(["js/qlik"], function(qlik) {
+    var config = {
+        host: window.location.hostname,
+        prefix: "/",
+        port: window.location.port,
+        isSecure: window.location.protocol === "https:"
+    };
 
-   ```html
-   <div id="filteredDataModal" class="modal">
-       <div class="modal-content">
-           <span class="close-button" onclick="closeFilteredDataModal()">&times;</span>
-           <h2>Filtered Data</h2>
-           <div id="filteredDataContainer"></div> <!-- Container to display filtered data -->
-       </div>
-   </div>
-   ```
+    var app = qlik.openApp('XYZ', config);
 
-2. **CSS for Modal**:
-   - Add styles for the modal.
+    document.getElementById('bookmarkBtn').addEventListener('click', function () {
+        document.getElementById('bookmarkModal').style.display = 'block';
+    });
 
-   ```css
-   .modal {
-       display: none; /* Hidden by default */
-       position: fixed; /* Stay in place */
-       z-index: 1; /* Sit on top */
-       left: 0;
-       top: 0;
-       width: 100%; /* Full width */
-       height: 100%; /* Full height */
-       overflow: auto; /* Enable scroll if needed */
-       background-color: rgb(0,0,0); /* Fallback color */
-       background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-   }
+    document.querySelectorAll('.close-button').forEach(button => {
+        button.addEventListener('click', function () {
+            this.parentElement.parentElement.style.display = 'none';
+        });
+    });
 
-   .modal-content {
-       background-color: #fefefe;
-       margin: 15% auto; /* 15% from the top and centered */
-       padding: 20px;
-       border: 1px solid #888;
-       width: 80%; /* Could be more or less, depending on screen size */
-   }
+    var myField = app.field("IBC Name").getData();
+    myField.OnData.bind(function() {
+        myField.rows.forEach(function(row) {
+            var option = document.createElement("option");
+            option.value = row.qText;
+            option.text = row.qText;
+            document.getElementById("client").appendChild(option);
+        });
+    });
 
-   .close-button {
-       color: #aaa;
-       float: right;
-       font-size: 28px;
-       font-weight: bold;
-   }
+    var myField1 = app.field("ProductLink").getData();
+    myField1.OnData.bind(function() {
+        myField1.rows.forEach(function(row) {
+            var option = document.createElement("option");
+            option.value = row.qText;
+            option.text = row.qText;
+            document.getElementById("product").appendChild(option);
+        });
+    });
 
-   .close-button:hover,
-   .close-button:focus {
-       color: black;
-       text-decoration: none;
-       cursor: pointer;
-   }
-   ```
+    var myField2 = app.field("Client Segment").getData();
+    myField2.OnData.bind(function() {
+        myField2.rows.forEach(function(row) {
+            var option = document.createElement("option");
+            option.value = row.qText;
+            option.text = row.qText;
+            document.getElementById("clientSegment").appendChild(option);
+        });
+    });
 
-3. **JavaScript to Open and Close Modal**:
-   - Add functions to open and close the modal.
+    window.testVariable = function(bookmarkId) {
+        console.log('Test Variable clicked for bookmark ID:', bookmarkId);
+        const bookmarkRow = document.querySelector(`button[onclick="testVariable(${bookmarkId})"]`).closest('tr');
+        const clients = bookmarkRow.cells[1].textContent.split(', ');
+        console.log('Clients:', clients);
+        app.field('IBC Name').selectValues(clients.map(client => ({ qText: client })), false, true).then(() => {
+            console.log('Clients selected successfully');
+            fetchFilteredData(); // Fetch and display filtered data in the modal
+        }).catch(error => {
+            console.error('Error selecting clients:', error);
+            alert('Error selecting clients');
+        });
+    };
 
-   ```javascript
-   function openFilteredDataModal() {
-       document.getElementById('filteredDataModal').style.display = 'block';
-   }
-
-   function closeFilteredDataModal() {
-       document.getElementById('filteredDataModal').style.display = 'none';
-   }
-   ```
-
-4. **Modify the `fetchFilteredData` and `displayFilteredData` Functions**:
-   - Ensure these functions update the modal content and then open it.
-
-   ```javascript
-   function fetchFilteredData() {
-       app.getObject('DJPtJK').then(model => {
-           model.getLayout().then(layout => {
-               let hypercube = layout.qHyperCube;
-               let qData = hypercube.qDataPages[0].qMatrix;
-               displayFilteredData(qData);
-           }).catch(error => {
-               console.error('Error fetching layout:', error);
-               alert('Error fetching layout');
-           });
-       }).catch(error => {
-           console.error('Error getting object:', error);
-           alert('Error getting object');
-       });
-   }
-
-   function displayFilteredData(qData) {
-       let container = document.getElementById('filteredDataContainer');
-       container.innerHTML = ''; // Clear previous content
-
-       let table = document.createElement('table');
-       table.className = 'bookmarks-list'; // Reuse existing table styles
-
-       // Add table headers
-       let thead = document.createElement('thead');
-       thead.innerHTML = `<tr>
-           <th>IBC Name</th>
-           <th>ProductLink</th>
-           <th>Client Segment</th>
-           <!-- Add other necessary headers -->
-       </tr>`;
-       table.appendChild(thead);
-
-       // Add table rows
-       let tbody = document.createElement('tbody');
-       qData.forEach(row => {
-           let tr = document.createElement('tr');
-           tr.innerHTML = `
-               <td>${row[0].qText}</td>
-               <td>${row[1].qText}</td>
-               <td>${row[2].qText}</td>
-               <!-- Add other necessary fields -->
-           `;
-           tbody.appendChild(tr);
-       });
-       table.appendChild(tbody);
-
-       container.appendChild(table);
-       openFilteredDataModal();
-   }
-
-   window.testVariable = function(bookmarkId) {
-       console.log('Test Variable clicked for bookmark ID:', bookmarkId);
-       const bookmarkRow = document.querySelector(`button[onclick="testVariable(${bookmarkId})"]`).closest('tr');
-       const clients = bookmarkRow.cells[1].textContent.split(', ');
-       console.log('Clients:', clients);
-       app.field('IBC Name').selectValues(clients.map(client => ({ qText: client })), false, true).then(() => {
-           console.log('Clients selected successfully');
-           fetchFilteredData(); // Fetch and display filtered data in the modal
-       }).catch(error => {
-           console.error('Error selecting clients:', error);
-           alert('Error selecting clients');
-       });
-   };
-   ```
-
-With these changes, clicking the "Test Variable" button should trigger the filtering of the table based on the selected clients and display the filtered data in a modal. The use of `getObject` ensures that we are retrieving the correct visualization and its data from the Qlik app.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <!-- Include FontAwesome for icons -->
-    <link rel="stylesheet" href=https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css>
-    <style>
-        .bookmark-btn {
-            background-color: #11c4ff;
-            color: white;
-            padding: 2px 10px;
-            border: none;
-            border-radius: 5px;
-            font-size: 17px;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .bookmark-btn::before {
-            content: url('https://www.flaticon.com/free-icon/favorite_9775292');
-            margin-right: 5px;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 5px;
-        }
-        .edit-btn, .delete-btn, .test-variable-btn {
-            background-color: #154360;
-            color: white;
-            padding: 5px 7px;
-            margin-left: 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .delete-btn {
-            background-color: #0076b6;
-        }
-        .delete-btn:hover {
-            background-color: #154360;
-        }
-        .modal {
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.4);
-        }
-        .bookmarks-modal {
-            display: none;
-            position: fixed;
-            z-index: 1;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0, 0, 0, 0.4);
-        }
-        .modal-content, .bookmarks-modal-content {
-            background-color: #fefefe;
-            margin: 10% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-            max-width: 600px;
-            border-radius: 5px;
-        }
-        .close-button {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-        .close-button:hover, .close-button:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .form-group {
-            margin-bottom: 20px;
-            position: relative;
-        }
-        .form-group select {
-            width: 100%;
-            height: 75px;
-            overflow-y: auto;
-        }
-        .form-group input[input="text"] {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 5px;
-            z-index: 1;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 15px;
-        }
-        .save-btn, .view-bookmarks-btn {
-            background-color: #00416b;
-            color: white;
-            padding: 10px 20px;
-            margin-right: 8px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .save-btn:hover, .view-bookmarks-btn:hover {
-            background-color: #0097C7;
-        }
-        .bookmarks-list {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .bookmarks-list th, .bookmarks-list td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        .bookmarks-list th {
-            background-color: #f2f2f2;
-        }
-        .selected-list {
-            padding: 5px;
-            font-size: 14px;
-        }
-        .selected-item {
-            display: inline-block;
-            margin: 2px;
-            padding: 2px 5px;
-            background-color: #cce5ff;
-            border-radius: 4px;
-        }
-        .selected-item i {
-            margin-left: 5px;
-            cursor: pointer;
-        }
-        input[type=reset] {
-            background-color: #0076b6;
-            color: white;
-            padding: 10px 20px;
-            margin-left: 150px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-    </style>
-</head>
-<body>
-    <span class="user-name" id="MDMUserName"> </span>
-    <button id="bookmarkBtn" class="bookmark-btn" style="float: right;"><i class="fa fa-book"></i>Bookmark</button>
-    <div id="bookmarkModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Add Bookmark</h2>
-            <form id="bookmarkForm">
-                <div class="form-group">
-                    <label for="bookmarkName">Bookmark Name:</label>
-                    <input type="text" id="bookmarkName" name="bookmarkName" required>
-                </div>
-                <div class="form-group">
-                    <label for="client">Client:</label>
-                    <input type="text" id="clientSearch" placeholder="Search clients" onkeyup="filterOptions('client', 'clientSearch')">
-                    <br><br>
-                    <select id="client" name="client" multiple onchange="updateSelectedList('client', 'selectedClients')">
-                    </select>
-                    <div id="selectedClients" class="selected-list"></div>
-                </div>
-                <div class="form-group">
-                    <label for="product">Product:</label>
-                    <input type="text" id="productSearch" placeholder="Search products" onkeyup="filterOptions('product', 'productSearch')">
-                    <br><br>
-                    <select id="product" name="product" multiple onchange="updateSelectedList('product', 'selectedProducts')">
-                    </select>
-                    <div id="selectedProducts" class="selected-list"></div>
-                </div>
-                <div class="form-group">
-                    <label for="clientSegment">Client Segment:</label>
-                    <input type="text" id="clientSegmentSearch" placeholder="Search client segments" onkeyup="filterOptions('clientSegment', 'clientSegmentSearch')">
-                    <br><br>
-                    <select id="clientSegment" name="clientSegment" multiple onchange="updateSelectedList('clientSegment', 'selectedClientSegments')">
-                    </select>
-                    <div id="selectedClientSegments" class="selected-list"></div>
-                </div>
-                <input type="hidden" id="editIndex" value="">
-                <input type="hidden" id="bookmarkId" value="">
-                <button type="submit" class="save-btn">Save</button>
-                <button type="button" class="view-bookmarks-btn" onclick="viewSavedBookmarks()">Saved Bookmarks</button>
-                <input type="reset" value="Reset">
-            </form>
-        </div>
-    </div>
-    <div id="bookmarksModal" class="bookmarks-modal">
-        <div class="bookmarks-modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Saved Bookmarks</h2>
-            <table class="bookmarks-list">
-                <thead>
-                    <tr>
-                        <th>Bookmark Name</th>
-                        <th>Clients</th>
-                        <th>Products</th>
-                        <th>Client Segments</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="bookmarksList">
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <script>
-        function filterOptions(selectId, searchId) {
-            var input, filter, ul, li, a, i;
-            input = document.getElementById(searchId);
-            filter = input.value.toUpperCase();
-            select = document.getElementById(selectId);
-            options = select.getElementsByTagName('option');
-            for (i = 0; i < options.length; i++) {
-                txtValue = options[i].textContent || options[i].innerText;
-                if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                    options[i].style.display = "";
-                } else {
-                    options[i].style.display = "none";
-                }
-            }
-        }
-        function updateSelectedList(selectId, listId) {
-            const select = document.getElementById(selectId);
-            const list = document.getElementById(listId);
-            list.innerHTML = '';
-            Array.from(select.selectedOptions).forEach(option => {
-                const item = document.createElement('span');
-                item.className = 'selected-item';
-                item.textContent = option.text;
-                const removeBtn = document.createElement('i');
-                removeBtn.className = 'fa fa-times';
-                removeBtn.onclick = function() {
-                    option.selected = false;
-                    updateSelectedList(selectId, listId);
-                };
-                item.appendChild(removeBtn);
-                list.appendChild(item);
-            });
-        }
-        function viewSavedBookmarks() {
-            displaySavedBookmarks();
-            document.getElementById('bookmarksModal').style.display = 'block';
-        }
-        function displaySavedBookmarks() {
-            fetch('http://localhost:5000/bookmarks')
-            .then(response => response.json())
-            .then(data => {
-                const listElement = document.getElementById('bookmarksList');
-                listElement.innerHTML = '';
-                data.forEach(bookmark => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `<td>${bookmark.bookmarkName}</td>
-                        <td>${bookmark.client ? bookmark.client.join(', ') : 'N/A'}</td>
-                        <td>${bookmark.product ? bookmark.product.join(', ') : 'N/A'}</td>
-                        <td>${bookmark.clientSegment ? bookmark.clientSegment.join(', ') : 'N/A'}</td>
-                        <td>
-                            <div class="action-buttons">
-                                <button class="edit-btn" onclick="editBookmark(${bookmark.id}, '${bookmark.bookmarkName}', '${bookmark.client.join(', ')}', '${bookmark.product.join(', ')}', '${bookmark.clientSegment.join(', ')}')">Edit</button>
-                                <button class="delete-btn" onclick="deleteBookmark(${bookmark.id})">Delete</button>
-                                <button class="test-variable-btn" onclick="testVariable(${bookmark.id})">Test Variable</button>
-                            </div>
-                        </td>`;
-                    listElement.appendChild(row);
-                });
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
-        }
-        function deleteBookmark(id) {
-            fetch(`http://localhost:5000/delete/${id}`, {
-                method: 'DELETE',
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-                viewSavedBookmarks();
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
-        }
-        function editBookmark(id, name, clients, products, segments) {
-            document.getElementById('bookmarkName').value = name;
-            document.getElementById('bookmarkId').value = id;
-            setSelectedOptions('client', clients.split(', '));
-            setSelectedOptions('product', products.split(', '));
-            setSelectedOptions('clientSegment', segments.split(', '));
-            document.getElementById('bookmarksModal').style.display = 'none';
-            document.getElementById('bookmarkModal').style.display = 'block';
-        }
-        function setSelectedOptions(selectId, values) {
-            const select = document.getElementById(selectId);
-            Array.from(select.options).forEach(option => {
-                option.selected = values.includes(option.value);
-            });
-            updateSelectedList(selectId, 'selected' + selectId.charAt(0).toUpperCase() + selectId.slice(1) + 's');
-        }
-        document.getElementById('bookmarkForm').addEventListener('submit', function (e) {
-            e.preventDefault();
-            const id = document.getElementById('bookmarkId').value;
-            const bookmarkName = document.getElementById('bookmarkName').value;
-            const client = Array.from(document.getElementById('client').selectedOptions).map(option => option.value);
-            const product = Array.from(document.getElementById('product').selectedOptions).map(option => option.value);
-            const clientSegment = Array.from(document.getElementById('clientSegment').selectedOptions).map(option => option.value);
-            const username = document.getElementById('MDMUserName').textContent.trim().split(' ')[1];
-            const bookmark = { bookmarkName, client, product, clientSegment, username };
-            if (id) {
-                updateBookmark(id, bookmark);
+    window.fetchFilteredData = function() {
+        app.createCube({
+            qDimensions: [
+                { qDef: { qFieldDefs: ["IBC Name"] } },
+                { qDef: { qFieldDefs: ["ProductLink"] } },
+                { qDef: { qFieldDefs: ["Client Segment"] } }
+                // Add other necessary fields
+            ],
+            qInitialDataFetch: [
+                { qTop: 0, qLeft: 0, qHeight: 1000, qWidth: 3 } // Adjust qHeight and qWidth as needed
+            ]
+        }, function(reply) {
+            let qData = reply.qHyperCube.qDataPages[0].qMatrix;
+            if (qData && qData.length > 0) {
+                displayFilteredData(qData);
             } else {
-                saveBookmark(bookmark);
+                console.error('No data retrieved or data pages are empty');
+                alert('No data retrieved or data pages are empty');
             }
-            document.getElementById('bookmarkModal').style.display = 'none';
-            resetForm();
+        }).catch(error => {
+            console.error('Error fetching data:', error);
+            alert('Error fetching data');
         });
-        document.getElementById('bookmarkForm').addEventListener('reset', function(){
-            document.getElementById('selectedClients').innerHTML = '';
-            document.getElementById('selectedProducts').innerHTML = '';
-            document.getElementById('selectedClientSegments').innerHTML = '';
+    };
+
+    window.displayFilteredData = function(qData) {
+        let container = document.getElementById('filteredDataContainer');
+        container.innerHTML = ''; // Clear previous content
+
+        let table = document.createElement('table');
+        table.className = 'bookmarks-list'; // Reuse existing table styles
+
+        // Add table headers
+        let thead = document.createElement('thead');
+        thead.innerHTML = `<tr>
+            <th>IBC Name</th>
+            <th>ProductLink</th>
+            <th>Client Segment</th>
+            <!-- Add other necessary headers -->
+        </tr>`;
+        table.appendChild(thead);
+
+        // Add table rows
+        let tbody = document.createElement('tbody');
+        qData.forEach(row => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${row[0].qText}</td>
+                <td>${row[1].qText}</td>
+                <td>${row[2].qText}</td>
+                <!-- Add other necessary fields -->
+            `;
+            tbody.appendChild(tr);
         });
-        function saveBookmark(bookmark) {
-            fetch('http://localhost:5000/save', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(bookmark),
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-                viewSavedBookmarks();
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
-        }
-        function updateBookmark(id, updatedBookmark) {
-            fetch(`http://localhost:5000/update/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(updatedBookmark),
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);
-                viewSavedBookmarks();
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
-        }
-        require(["js/qlik"], function(qlik) {
-            var app = qlik.openApp('XYZ'); // Replace 'XYZ' with your actual app ID
-            document.getElementById('bookmarkBtn').addEventListener('click', function () {
-                document.getElementById('bookmarkModal').style.display = 'block';
-            });
-            document.querySelectorAll('.close-button').forEach(button => {
-                button.addEventListener('click', function () {
-                    this.parentElement.parentElement.style.display = 'none';
-                });
-            });
-            var myField = app.field("IBC Name").getData();
-            myField.OnData.bind(function() {
-                myField.rows.forEach(function(row) {
-                    var option = document.createElement("option");
-                    option.value = row.qText;
-                    option.text = row.qText;
-                    document.getElementById("client").appendChild(option);
-                });
-            });
-            var myField1 = app.field("ProductLink").getData();
-            myField1.OnData.bind(function() {
-                myField1.rows.forEach(function(row) {
-                    var option = document.createElement("option");
-                    option.value = row.qText;
-                    option.text = row.qText;
-                    document.getElementById("product").appendChild(option);
-                });
-            });
-            var myField2 = app.field("Client Segment").getData();
-            myField2.OnData.bind(function() {
-                myField2.rows.forEach(function(row) {
-                    var option = document.createElement("option");
-                    option.value = row.qText;
-                    option.text = row.qText;
-                    document.getElementById("clientSegment").appendChild(option);
-                });
-            });
+        table.appendChild(tbody);
 
-            window.testVariable = function(bookmarkId) {
-                console.log('Test Variable clicked for bookmark ID:', bookmarkId);
-                const bookmarkRow = document.querySelector(`button[onclick="testVariable(${bookmarkId})"]`).closest('tr');
-                const clients = bookmarkRow.cells[1].textContent.split(', ');
-                console.log('Clients:', clients);
+        container.appendChild(table);
+        openFilteredDataModal();
+    };
 
-                // Clear previous selections and select new clients
-                app.field("IBC Name").clear().then(() => {
-                    return app.field("IBC Name").selectValues(
-                        clients.map(client => ({ qText: client })),
-                        true,  // toggle
-                        true   // soft lock
-                    );
-                }).then(() => {
-                    console.log('Clients selected:', clients);
-                    // Update the existing table with the filtered data
-                    updateTableWithFilteredData();
-                }).catch(err => {
-                    console.error('Error selecting clients or fetching data:', err);
-                    alert('Error selecting clients or fetching data.');
-                });
-            };
+    // Modal functions
+    function openFilteredDataModal() {
+        document.getElementById('filteredDataModal').style.display = 'block';
+    }
 
-            function updateTableWithFilteredData() {
-                app.getObject('DJPtJK').then(model => {
-                    console.log('Successfully retrieved object model:', model);
-                    return model.getLayout();
-                }).then(layout => {
-                    console.log('Successfully retrieved layout:', layout);
-                    const tables = document.querySelectorAll('table.myTable');
-                    tables.forEach(table => {
-                        table.innerHTML = ''; // Clear existing table data
-                        layout.qHyperCube.qDataPages[0].qMatrix.forEach(row => {
-                            const tr = document.createElement('tr');
-                            row.forEach(cell => {
-                                const td = document.createElement('td');
-                                td.textContent = cell.qText || '-';
-                                tr.appendChild(td);
-                            });
-                            table.appendChild(tr);
-                        });
-                    });
-                }).catch(err => {
-                    console.error('Error updating table with filtered data:', err);
-                    alert('Error updating table with filtered data.');
-                });
-            }
-        });
-    </script>
-</body>
-</html>
+    function closeFilteredDataModal() {
+        document.getElementById('filteredDataModal').style.display = 'none';
+    }
+});
+```
+
+### Explanation:
+
+1. **Define Hypercube**:
+   - `app.createCube`: Creates a hypercube with dimensions for `IBC Name`, `ProductLink`, and `Client Segment`.
+   - `qInitialDataFetch`: Specifies the initial data fetch settings (e.g., top, left, height, width).
+
+2. **Update `testVariable` Function**:
+   - Selects client values and triggers data fetching using the hypercube.
+
+3. **Display Data**:
+   - `displayFilteredData`: Processes the retrieved hypercube data and updates the modal with the filtered results.
+
+### Modal HTML:
+
+Add a modal container to your HTML for displaying the filtered data:
+
+```html
+<div id="filteredDataModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" onclick="closeFilteredDataModal()">&times;</span>
+        <h2>Filtered Data</h2>
+        <div id="filteredDataContainer"></div>
+    </div>
+</div>
+```
+
+### Summary:
+
+- This approach ensures that we retrieve and display the filtered data directly from the Qlik app based on the selected client values without needing an object ID.
+- Make sure the Qlik app ID and field names match the actual names in your Qlik Sense app.
+- This solution aims to address the filtering and display of data based on the selected client values in the dropdown.
