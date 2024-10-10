@@ -1,6 +1,13 @@
-import pyodbc
+import jaydebeapi
 
-# Function to read credentials from a text file
+# Path to the Netezza JDBC driver JAR file
+jdbc_driver_path = '/path/to/nzjdbc.jar'  # Replace with your actual path to nzjdbc.jar
+
+# Database connection details
+url = 'jdbc:netezza://your_server_url:5480/your_database'  # Replace with your server URL and database name
+driver_class = 'org.netezza.Driver'
+
+# Read credentials from a text file
 def read_credentials(file_path):
     credentials = {}
     with open(file_path, 'r') as file:
@@ -9,30 +16,16 @@ def read_credentials(file_path):
             credentials[key] = value
     return credentials
 
-# Connection parameters
-alias = 'your_alias'  # Replace with your actual alias
-driver = '{NetezzaSQL}'  # Netezza driver name
-url = 'your_server_url'  # Replace with your actual server URL
-# Read credentials from the text file
+# Read username and password
 credentials_file = 'credentials.txt'
 credentials = read_credentials(credentials_file)
-
-# Extract username and password from the credentials dictionary
 username = credentials.get('username')
 password = credentials.get('password')
 
-# Connection string using the provided parameters
-conn_str = (
-    f"DRIVER={driver};"
-    f"SERVER={url};"
-    f"DATABASE={alias};"
-    f"UID={username};"
-    f"PWD={password};"
-)
-
-# Test the connection
+# Test connection to Netezza
 try:
-    conn = pyodbc.connect(conn_str)
+    # Establish a connection using the JDBC driver
+    conn = jaydebeapi.connect(driver_class, url, [username, password], jdbc_driver_path)
     print("Connection to Netezza database was successful.")
     conn.close()
 except Exception as e:
