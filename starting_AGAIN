@@ -1,29 +1,39 @@
-Alternative Discussion 1: Identifying Bias - "Bias Awareness"
-Bias Awareness
+import pyodbc
 
-Purpose:
-To explore how bias is identified and how it affects workplace dynamics.
+# Function to read credentials from a text file
+def read_credentials(file_path):
+    credentials = {}
+    with open(file_path, 'r') as file:
+        for line in file:
+            key, value = line.strip().split('=')
+            credentials[key] = value
+    return credentials
 
-Quote to introduce the discussion:
-“Awareness of bias is the first step toward change.”
+# Connection parameters
+alias = 'your_alias'  # Replace with your actual alias
+driver = '{NetezzaSQL}'  # Netezza driver name
+url = 'your_server_url'  # Replace with your actual server URL
+# Read credentials from the text file
+credentials_file = 'credentials.txt'
+credentials = read_credentials(credentials_file)
 
-Fill in the blank prompt:
-“A bias I’ve noticed in my workplace is _____________, and it makes me feel _____________.”
+# Extract username and password from the credentials dictionary
+username = credentials.get('username')
+password = credentials.get('password')
 
-Directions:
-Have each participant fill in the blanks with their observations and emotional response. This brings attention to how bias affects not just processes but also people’s feelings and motivations at work.
+# Connection string using the provided parameters
+conn_str = (
+    f"DRIVER={driver};"
+    f"SERVER={url};"
+    f"DATABASE={alias};"
+    f"UID={username};"
+    f"PWD={password};"
+)
 
-Alternative Discussion 2: Courageous Solutions - "Taking Action"
-Taking Action
-
-Purpose:
-This discussion focuses on small, courageous actions that can lead to bigger changes in the workplace.
-
-Quote to introduce the discussion:
-“Courage doesn’t always roar. Sometimes courage is the quiet voice at the end of the day saying, ‘I will try again tomorrow.’”
-
-Fill in the blank prompt:
-“One courageous step I can take to address bias is _____________, because I believe _____________.”
-
-Directions:
-Go around the circle, and after all participants have filled in the blank, discuss how small actions can lead to meaningful change in addressing bias.
+# Test the connection
+try:
+    conn = pyodbc.connect(conn_str)
+    print("Connection to Netezza database was successful.")
+    conn.close()
+except Exception as e:
+    print(f"Failed to connect to the Netezza database: {e}")
