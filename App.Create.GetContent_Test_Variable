@@ -1,67 +1,30 @@
-import pyodbc
-from openpyxl import load_workbook
-import os
+Here's the updated How Summary Comments with your recognitions included:
 
-# Load the Excel file
-excel_file = r'path_to_your_excel_file.xlsx'  # Replace with your file path
-workbook = load_workbook(excel_file)
-sheet = workbook.active  # Assuming you want to read from the first sheet
 
-# Path to output text file
-output_file = 'output_file.txt'
+---
 
-# Clear the text file if it already exists
-if os.path.exists(output_file):
-    os.remove(output_file)
+How Summary Comments
 
-# Database connection details
-conn_str = (
-    "DRIVER={NetezzaSQL};"
-    "SERVER=your_server_name;"
-    "DATABASE=your_database_name;"
-    "UID=your_username;"
-    "PWD=your_password;"
-    # Replace placeholders with your actual connection details
-)
+Throughout this review period, I have actively demonstrated Barclays' values and mindset in my work and interactions, which has been acknowledged through multiple recognitions:
 
-# Connect to Netezza
-try:
-    conn = pyodbc.connect(conn_str)
-    print("Connected to Netezza database successfully.")
-except Exception as e:
-    print(f"Failed to connect to the database: {e}")
-    exit(1)
+Mindset - Challenge: I consistently sought ways to improve existing processes, such as automating SQL operations in SAP BO, which enhanced efficiency and reduced manual efforts. This proactive approach led to Social Recognition for my Digital Credentials skills badge, which reflects my commitment to skill development and challenging the status quo.
 
-# Function to execute a sample SQL query
-def execute_sql_query(id_value):
-    try:
-        # Sample SQL query (modify as needed)
-        query = f"SELECT * FROM your_table WHERE id_column = '{id_value}'"
-        cursor = conn.cursor()
-        cursor.execute(query)
-        # Fetch results (optional, depends on what you need to do)
-        result = cursor.fetchall()  # You can check the result for success if needed
-        cursor.close()
-        print(f"Query executed successfully for ID: {id_value}")
-        return True  # Return True if the query succeeds
-    except Exception as e:
-        print(f"Failed to execute query for ID {id_value}: {e}")
-        return False  # Return False if the query fails
+Mindset - Drive: I took full ownership of my objectives, including the development of Python scripts for data automation and preparing for the AWS archival project. My drive to excel was also recognized through the Thank You with Points for being the top performer in the Technology Learning Challenge at Whippany, demonstrating my dedication to learning and delivering results.
 
-# Loop through each row in the sheet, get IDs, execute SQL, and write to file
-with open(output_file, 'a') as file:
-    for row in sheet.iter_rows(min_row=2, values_only=True):  # Assuming first row is headers
-        id_value = row[0]  # Adjust the column index if necessary
-        if id_value:  # Ensure the value is not None or empty
-            # Step 1: Read the ID
-            print(f"Processing ID: {id_value}")
+Mindset - Empower: My involvement in the EmpowerHer LeanIn Circle highlights my commitment to fostering an inclusive and supportive culture. I collaborated with colleagues to drive initiatives that promote diversity and inclusion, contributing to a positive work environment that empowers others.
 
-            # Step 2: Execute the SQL query
-            if execute_sql_query(id_value):
-                # Step 3: Write the ID to the text file if the query succeeds
-                file.write(f"{id_value}\n")
-                file.flush()  # Ensure immediate write
-                print(f"ID {id_value} written to file.\n")
+Values - Respect: I have consistently treated all colleagues with respect, valuing diverse perspectives during discussions and collaborations, especially within the LeanIn Circle. I maintained a culture of mutual respect, appreciating and acknowledging the contributions of others.
 
-# Close the database connection
-conn.close()
+Values - Integrity: I ensured that my automation solutions and reporting enhancements adhered to organizational standards, upholding honesty and transparency in my work. The precision and compliance of my automated processes were recognized as part of my commitment to integrity.
+
+Values - Service: By improving the efficiency and accuracy of data delivery through automation, I enhanced service quality to clients and stakeholders. I maintained a user-centric approach, aligning my efforts with the organization's focus on delivering world-class service.
+
+Values - Excellence: I set high standards for my work, consistently seeking opportunities for improvement and innovation. My recognitions for diversity of thought and top performance in learning initiatives underscore my commitment to excellence and continuous growth.
+
+Values - Stewardship: I approached all projects with sustainability and long-term impact in mind. My automation efforts aimed to create lasting improvements, aligned with risk management and compliance standards, ensuring the organization's long-term interests are protected.
+
+
+
+---
+
+This version integrates your recognitions while emphasizing how they align with Barclays' values and mindset. Let me know if there are any other details you'd like to add!
