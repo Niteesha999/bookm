@@ -1,5 +1,5 @@
 import jaydebeapi
-from openpyxl import load_workbook
+from openpyxl import load_workbook, Workbook
 import os
 
 # Path to the Netezza JDBC driver JAR file
@@ -24,10 +24,11 @@ credentials = read_credentials(credentials_file)
 username = credentials.get('username')
 password = credentials.get('password')
 
-# Load the Excel file
+# Load the Excel file and specify the sheet name
 excel_file = r'path_to_your_excel_file.xlsx'  # Replace with your file path
 workbook = load_workbook(excel_file)
-sheet = workbook.active  # Assuming you want to read from the first sheet
+sheet_name = 'your_sheet_name'  # Replace with the actual sheet name
+sheet = workbook[sheet_name]  # Load the specific sheet by name
 
 # Path to output text file
 output_file = 'output_file.txt'
@@ -36,21 +37,33 @@ output_file = 'output_file.txt'
 if os.path.exists(output_file):
     os.remove(output_file)
 
+# Create a new Excel workbook to store query results
+result_workbook = Workbook()
+result_sheet = result_workbook.active
+result_sheet.title = 'Query_Results'
+result_sheet.append(['ID', 'Column1', 'Column2', 'Column3'])  # Adjust column names as needed
+
 # Function to execute a sample SQL query
 def execute_sql_query(conn, id_value):
     try:
         # Sample SQL query (modify as needed)
-        query = f"SELECT * FROM your_table WHERE id_column = '{id_value}'"
+        query = f"SELECT column1, column2, column3 FROM your_table WHERE id_column = '{id_value}'"
         cursor = conn.cursor()
         cursor.execute(query)
-        # Fetch results (optional, depends on what you need to do)
-        result = cursor.fetchall()  # You can check the result for success if needed
-        cursor.close()
-        print(f"Query executed successfully for ID: {id_value}")
-        return True  # Return True if the query succeeds
+        
+        # Fetch results
+        results = cursor.fetchall()
+
+        # If results are found, return them
+        if results:
+            print(f"Query executed successfully for ID: {id_value}")
+            return results
+        else:
+            print(f"No results found for ID: {id_value}")
+            return None
     except Exception as e:
         print(f"Failed to execute query for ID {id_value}: {e}")
-        return False  # Return False if the query fails
+        return None
 
 # Test connection to Netezza and process IDs from Excel
 try:
@@ -67,12 +80,22 @@ try:
                 print(f"Processing ID: {id_value}")
 
                 # Step 2: Execute the SQL query
-                if execute_sql_query(conn, id_value):
-                    # Step 3: Write the ID to the text file if the query succeeds
+                results = execute_sql_query(conn, id_value)
+
+                # Step 3: If results are found, write them to the new Excel file
+                if results:
+                    for result_row in results:
+                        result_sheet.append([id_value] + list(result_row))
+
+                    # Step 4: Write the ID to the text file if the query succeeds
                     file.write(f"{id_value}\n")
                     file.flush()  # Ensure immediate write
                     print(f"ID {id_value} written to file.\n")
     
+    # Save the new Excel file with query results
+    result_workbook.save('query_results.xlsx')
+    print("Query results saved to 'query_results.xlsx'.")
+
     # Close the database connection
     conn.close()
 except Exception as e:
