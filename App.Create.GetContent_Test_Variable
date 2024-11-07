@@ -1,165 +1,277 @@
-Here’s a unique and engaging slide structure for "Learn to Negotiate as a Woman to Succeed" that follows your specified format:
+1.	MAX - MAX()
+2.	TO_CHAR - CAST(... AS VARCHAR) or DATE_FORMAT for date formatting
+3.	SUM - SUM()
+4.	NVL - COALESCE()
+5.	COUNT - COUNT()
+6.	TO_DATE - DATE_PARSE or PARSE_DATETIME
+7.	DATE - DATE()
+8.	VARCHAR - CAST(... AS VARCHAR)
+9.	SUBSTR - SUBSTRING()
+10.	UPPER - UPPER()
+11.	ADD_MONTHS - DATE_ADD('month',...)
+12.	ROW_NUMBER - ROW_NUMBER() OVER (...)
+13.	MIN - MIN()
+14.	DAY - DAY(...)
+15.	TO_TIMESTAMP - FROM_UNIXTIME(...) or PARSE_DATETIME
+16.	MONTH - MONTH(...)
+17.	LPAD - LPAD(...)
+18.	TIMESTAMP - TIMESTAMP(...)
+19.	INTERVAL - INTERVAL ...
+20.	LAST_DAY - LAST_DAY(...)
+21.	RANK - RANK() OVER (...)
+22.	AVG - AVG()
+23.	VERSION - Athena does not have a specific function; could use AWS_REGION``
+24.	RANDOM - RANDOM()
+25.	INSTR - POSITION(...)
+26.	TIME - TIME(...)
+27.	NAME - No direct equivalent, often needs context.
+28.	REPLACE - REPLACE(...)
+29.	HOUR - HOUR(...)
+30.	LENGTH - LENGTH(...)
+31.	TEXT - CAST(... AS VARCHAR)
+32.	NOW - NOW()
+33.	ROUND - ROUND(...)
+34.	DATE_TRUNC - DATE_TRUNC(...)
+35.	TIMEZONE - No direct equivalent; handle with AT TIME ZONE.
+36.	CHAR - CAST(... AS CHAR)
+37.	YEAR - YEAR(...)
+38.	TRANSLATE - No direct equivalent; use REGEXP_REPLACE.
+39.	NUMERIC - CAST(... AS DECIMAL)
+40.	LOWER - LOWER(...)
+41.	LAG - LAG(...) OVER (...)
+42.	SECOND - SECOND(...)
+43.	ABS - ABS(...)
+44.	LEAD - LEAD(...) OVER (...)
+45.	FLOOR - FLOOR(...)
+46.	DAYS_BETWEEN - DATEDIFF(...)
+47.	SUBSTRING - SUBSTRING(...)
+48.	FIRST_VALUE - FIRST_VALUE(...) OVER (...)
+49.	LTRIM - LTRIM(...)
+50.	POSITION - POSITION(...)
+51.	DATE_PART - EXTRACT(...)
+52.	REVERSE - REVERSE(...)
+53.	RTRIM - RTRIM(...)
+54.	MOD - MOD(...)
+55.	REGEXP_EXTRACT - REGEXP_EXTRACT(...)
+56.	RPAD - RPAD(...)
+57.	TO_NUMBER - CAST(... AS DECIMAL)
+58.	MINUTE - MINUTE(...)
+59.	DENSE_RANK - DENSE_RANK() OVER (...)
+60.	LOG - LOG(...)
+61.	NULLVALUE - COALESCE(...)
+62.	REGEXP_REPLACE - REGEXP_REPLACE(...)
+63.	GROUP_CONCAT - GROUP_CONCAT(...)
+64.	LAST_VALUE - LAST_VALUE(...) OVER (...)
+65.	GROUPING - No direct equivalent; could depend on query context.
+66.	VARIANCE - VARIANCE(...)
+67.	HASH8 - No direct equivalent; Athena uses MD5, SHA256.
+68.	PERCENTILE_CONT - APPROX_PERCENTILE(...)
+69.	STRPOS - POSITION(...)
+70.	AGE - DATEDIFF(...)
+71.	SECONDS_BETWEEN - DATEDIFF('second',...)
+72.	TRUNC - TRUNC(...)
+73.	CURRENT_USER - CURRENT_USER
+74.	STRING_TO_INT - CAST(... AS INTEGER)
+75.	REGEXP_SPLIT_ROWS - SPLIT(...)
+76.	STRRIGHT - No direct equivalent; use SUBSTRING.
+77.	EXP - EXP(...)
+These equivalents should help in migrating or adapting queries from Netezza to Athena. Let me know if you need further clarification on specific functions.
+4o
+You said:
+ 
+ 
+Also, these
+ChatGPT said:
+ChatGPT
+Here is a continuation with the Amazon Athena SQL equivalents for the additional Netezza functions from the images you uploaded:
+1.	STDDEV - STDDEV_SAMP(...)
+2.	INT4 - CAST(... AS INTEGER)
+3.	CORR - CORR(...)
+4.	THIS_QUARTER - No direct equivalent; could be calculated using date functions.
+5.	STRLEFT - LEFT(...)
+6.	CEIL - CEIL(...)
+7.	INITCAP - INITCAP(...) (if available, otherwise use CONCAT and UPPER/LOWER)
+8.	REGEXP_LIKE - REGEXP_LIKE(...)
+9.	TAQ_BEST_QUOTEUDF - No direct equivalent; likely custom in Netezza.
+10.	REGEXP_SPLIT_COLUMNS - Use SPLIT(...)
+11.	GET_VALUE_VARCHAR - No direct equivalent; may need custom query logic.
+12.	ISTRUE - No direct equivalent; typically use CASE WHEN for boolean logic.
+13.	ARRAY_SPLIT - Use SPLIT(...)
+14.	BPCHAR - CAST(... AS CHAR)
+15.	MEDIAN - APPROX_PERCENTILE(..., 0.5)
+16.	CHR - CHR(...)
+17.	SIGN - SIGN(...)
+18.	LEAST - LEAST(...)
+19.	REGEXP_INSTR - REGEXP_INSTR(...)
+20.	RAWTOHEX - TO_HEX(...)
+21.	INT_TO_STRING - CAST(... AS VARCHAR)
+These should cover the functions from the latest set of images as well. Let me know if you need further explanations on any of these conversions.
+4o
+You said:
+Also, give me examples converting this to Athena for all the 98 above functions
+ChatGPT said:
+ChatGPT
+Creating examples for each function conversion from Netezza to Athena SQL will be extensive. I’ll illustrate conversions with Athena SQL syntax by grouping similar functions together for efficiency. Let’s proceed with structured categories and explanations:
+1. Aggregation Functions
+Netezza: MAX(column), MIN(column), SUM(column), COUNT(column), AVG(column), STDDEV(column)
+•	Athena: These aggregation functions are directly supported.
+sql
+Copy code
+SELECT 
+    MAX(column) AS max_value,
+    MIN(column) AS min_value,
+    SUM(column) AS total,
+    COUNT(column) AS count,
+    AVG(column) AS average,
+    STDDEV_SAMP(column) AS stddev_value
+FROM table_name;
+2. Date and Time Functions
+•	TO_TIMESTAMP (Netezza) vs FROM_UNIXTIME (Athena)
+sql
+Copy code
+SELECT FROM_UNIXTIME(column) AS timestamp_value FROM table_name;
+•	TO_DATE (Netezza) vs DATE_PARSE (Athena)
+sql
+Copy code
+SELECT DATE_PARSE(column, '%Y-%m-%d') AS date_value FROM table_name;
+•	DATE (Netezza) vs DATE (Athena)
+sql
+Copy code
+SELECT DATE(column) AS date_only FROM table_name;
+•	MONTH, DAY, YEAR (Netezza) vs MONTH, DAY, YEAR (Athena)
+sql
+Copy code
+SELECT 
+    YEAR(column) AS year_part, 
+    MONTH(column) AS month_part,
+    DAY(column) AS day_part
+FROM table_name;
+•	DATE_TRUNC (Netezza) vs DATE_TRUNC (Athena)
+sql
+Copy code
+SELECT DATE_TRUNC('day', column) AS day_truncated FROM table_name;
+3. String Functions
+•	TO_CHAR (Netezza) vs CAST / FORMAT (Athena)
+sql
+Copy code
+SELECT CAST(column AS VARCHAR) AS char_value FROM table_name;
+•	SUBSTR (Netezza) vs SUBSTRING (Athena)
+sql
+Copy code
+SELECT SUBSTRING(column, 1, 5) AS substr_value FROM table_name;
+•	UPPER, LOWER (Netezza) vs UPPER, LOWER (Athena)
+sql
+Copy code
+SELECT UPPER(column) AS upper_value, LOWER(column) AS lower_value FROM table_name;
+•	LPAD, RPAD (Netezza) vs LPAD, RPAD (Athena)
+sql
+Copy code
+SELECT 
+    LPAD(column, 10, '0') AS lpad_value,
+    RPAD(column, 10, '0') AS rpad_value
+FROM table_name;
+•	INSTR (Netezza) vs POSITION (Athena)
+sql
+Copy code
+SELECT POSITION('search_string' IN column) AS position_value FROM table_name;
+4. Mathematical Functions
+•	ROUND (Netezza) vs ROUND (Athena)
+sql
+Copy code
+SELECT ROUND(column, 2) AS rounded_value FROM table_name;
+•	ABS, CEIL, FLOOR (Netezza) vs ABS, CEIL, FLOOR (Athena)
+sql
+Copy code
+SELECT 
+    ABS(column) AS abs_value, 
+    CEIL(column) AS ceil_value, 
+    FLOOR(column) AS floor_value 
+FROM table_name;
+•	MOD (Netezza) vs MOD (Athena)
+sql
+Copy code
+SELECT MOD(column, 2) AS mod_value FROM table_name;
+•	LOG, EXP (Netezza) vs LOG, EXP (Athena)
+sql
+Copy code
+SELECT 
+    LOG(column) AS log_value,
+    EXP(column) AS exp_value 
+FROM table_name;
+5. Window Functions
+•	ROW_NUMBER (Netezza) vs ROW_NUMBER (Athena)
+sql
+Copy code
+SELECT ROW_NUMBER() OVER (PARTITION BY column ORDER BY other_column) AS row_num FROM table_name;
+•	RANK, DENSE_RANK (Netezza) vs RANK, DENSE_RANK (Athena)
+sql
+Copy code
+SELECT 
+    RANK() OVER (PARTITION BY column ORDER BY other_column) AS rank_value,
+    DENSE_RANK() OVER (PARTITION BY column ORDER BY other_column) AS dense_rank_value
+FROM table_name;
+•	LAG, LEAD (Netezza) vs LAG, LEAD (Athena)
+sql
+Copy code
+SELECT 
+    LAG(column) OVER (ORDER BY other_column) AS lag_value,
+    LEAD(column) OVER (ORDER BY other_column) AS lead_value
+FROM table_name;
+6. Conditional and Null Handling Functions
+•	NVL (Netezza) vs COALESCE (Athena)
+sql
+Copy code
+SELECT COALESCE(column, 'default_value') AS coalesce_value FROM table_name;
+•	CASE WHEN (similar in both)
+sql
+Copy code
+SELECT 
+    CASE 
+        WHEN column > 0 THEN 'Positive' 
+        ELSE 'Non-Positive' 
+    END AS case_value 
+FROM table_name;
+7. Casting Functions
+•	VARCHAR, CHAR (Netezza) vs CAST (Athena)
+sql
+Copy code
+SELECT CAST(column AS VARCHAR) AS varchar_value FROM table_name;
+•	TO_NUMBER (Netezza) vs CAST as DECIMAL (Athena)
+sql
+Copy code
+SELECT CAST(column AS DECIMAL(10,2)) AS decimal_value FROM table_name;
+8. Regular Expressions
+•	REGEXP_EXTRACT, REGEXP_REPLACE (Netezza) vs REGEXP_EXTRACT, REGEXP_REPLACE (Athena)
+sql
+Copy code
+SELECT 
+    REGEXP_EXTRACT(column, 'pattern') AS regex_extract_value,
+    REGEXP_REPLACE(column, 'pattern', 'replacement') AS regex_replace_value 
+FROM table_name;
+•	REGEXP_LIKE (Netezza) vs REGEXP_LIKE (Athena)
+sql
+Copy code
+SELECT 
+    CASE 
+        WHEN REGEXP_LIKE(column, 'pattern') THEN 'Match' 
+        ELSE 'No Match' 
+    END AS regex_like_value 
+FROM table_name;
+9. Miscellaneous Functions
+•	ARRAY_SPLIT, STRING_TO_INT (Netezza) vs SPLIT, CAST as INTEGER (Athena)
+sql
+Copy code
+SELECT 
+    SPLIT(column, ',') AS array_split_value,
+    CAST(column AS INTEGER) AS int_value 
+FROM table_name;
+•	GROUP_CONCAT (Netezza) vs GROUP_CONCAT (Athena)
+sql
+Copy code
+SELECT GROUP_CONCAT(column, ',') AS concatenated_values FROM table_name GROUP BY other_column;
+•	SIGN (Netezza) vs SIGN (Athena)
+sql
+Copy code
+SELECT SIGN(column) AS sign_value FROM table_name;
 
-
----
-
-Slide 1: Topic Introduction
-
-Learn to Negotiate as a Woman to Succeed
-
-Why Negotiation Matters:
-
-Close the Gaps: Women often hesitate to negotiate, leading to gaps in salary, leadership, and opportunities.
-
-Empowerment and Confidence: Effective negotiation helps you advocate for your needs and ambitions.
-
-Career Advancement: Strong negotiation skills can open doors to promotions, raises, and leadership roles.
-
-
-Session Goals:
-
-Understand common challenges women face in negotiations.
-
-Build confidence to ask for what you deserve.
-
-Learn practical techniques to negotiate effectively.
-
-
-
----
-
-Slide 2: Homework Reflection
-
-Reflection on Negotiation
-
-Quote for Reflection:
-"You get in life what you have the courage to ask for."
-– Oprah Winfrey
-
-Reflection Prompt:
-Think about a time when you didn’t negotiate for what you wanted.
-
-What held you back?
-
-What might have changed if you had asked?
-
-
-Directions:
-Be prepared to share your reflection in today’s session.
-
-
----
-
-Slide 3: Discussion 1 – Identifying Negotiation Challenges
-
-Challenges Women Face in Negotiation
-
-Prompt:
-“A challenge I face when negotiating is _____________, and I believe it’s because _____________.”
-
-Purpose: Help participants reflect on personal negotiation challenges and identify common patterns.
-
-Directions: Each participant completes the prompt and shares with the group.
-
-
-Reflection:
-What similarities do you notice in the challenges shared? How might these reflect larger social or workplace dynamics?
-
-
----
-
-Slide 4: Activity 1 – Negotiation Snap Judgment
-
-Negotiation Snap Judgment
-
-Purpose:
-A quick activity to help participants think on their feet and practice assertive responses.
-
-1. The Circle Lead will read short scenarios out loud, one at a time.
-
-Example: "Your boss offers a raise, but it’s lower than expected."
-
-
-
-2. Participants respond immediately with what they would say in that situation (e.g., “Thank you, but I believe my contributions merit a larger raise. Can we discuss this further?”).
-
-
-3. Debrief: After a few rounds, discuss which responses felt strongest and why.
-
-
-
-This activity helps participants build confidence with fast, assertive responses.
-
-
----
-
-Slide 5: Discussion 2 – Building Negotiation Confidence
-
-Building Confidence for Negotiation
-
-Prompt:
-“One way I can build my confidence in negotiation is _____________, because I know _____________.”
-
-Purpose: Encourage participants to identify specific actions they can take to feel more confident.
-
-Directions: Each participant completes the prompt and shares with the group.
-
-
-Reflection:
-How does focusing on personal strengths or specific actions impact confidence in negotiation?
-
-
----
-
-Slide 6: Wrap-Up Conversation – Power Phrases for Negotiation
-
-Power Phrases for Negotiation
-
-Purpose:
-Discuss powerful phrases participants can use in various negotiation scenarios.
-
-Examples of Power Phrases:
-
-“I appreciate the offer, but here’s what I believe reflects my contributions…”
-
-“Can you explain the reasoning behind this?”
-
-“What can we do to bridge this gap?”
-
-
-Reflection Question:
-Which of these phrases resonates with you? How could using strong language make a difference in negotiation outcomes?
-
-This discussion leaves participants with practical language they can use in real negotiations.
-
-
----
-
-Slide 7: Activity 2 – Role-Play Negotiation Scenarios
-
-Role-Playing Negotiation
-
-Purpose:
-To practice negotiation skills in a supportive setting.
-
-1. Pairs: Divide participants into pairs.
-
-
-2. Choose Scenarios: Each pair selects a negotiation scenario (e.g., asking for a raise, flexible hours, or additional resources).
-
-
-3. Role-Play: One participant practices negotiating while the other listens and gives feedback.
-
-
-4. Switch Roles: Switch so both have a chance to practice.
-
-
-
-Debrief:
-Reflect on what worked well and discuss any insights or improvements for future negotiations.
-
-
----
-
-This structure introduces the topic, allows for reflective discussions, and incorporates quick, impactful activities to build negotiation skills in a way that’s engaging and confidence-boosting.
 
