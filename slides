@@ -28,3 +28,93 @@ ________________________________________
 Limitations of AWS SCT for Athena
 •	Athena is designed for querying data directly in S3, not for complex transactional operations.
 •	AWS SCT can handle schema conversion well, but query compatibility conversion may require manual intervention for complex scenarios.
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+Installation process--
+
+1. Launch AWS SCT
+Open the Application:
+Locate and open the AWS SCT application on your computer.
+Upon launching, you'll see the main dashboard, which includes:
+Menu Bar: Located at the top, providing access to various functions like creating projects, connecting to databases, and exporting results.
+Project Tree: Situated on the left, displaying your projects and their components.
+Main Workspace: The central area where detailed information about your projects, schemas, and conversion progress is shown.
+2. Create a New Project
+Initiate a New Project:
+
+Click on File in the menu bar and select New Project.
+A dialog box will appear prompting you to enter project details.
+Enter Project Details:
+
+Project Name: Provide a descriptive name for your project (e.g., "Netezza to Athena Migration").
+Location: Choose a directory on your system where the project files will be stored.
+Select Source and Target Databases:
+
+Source Database Engine: Choose Netezza from the dropdown menu.
+Target Database Engine: Select your desired target, such as Amazon Athena.
+Finalize Project Creation:
+
+Click OK to create the project.
+The new project will now appear in the Project Tree on the left.
+3. Connect to the Source Database (Netezza)
+Add Source Connection:
+
+In the Project Tree, right-click on Source and select Add Source.
+A connection dialog will open.
+Configure Connection Settings:
+
+Database Engine: Ensure Netezza is selected.
+Connection Name: Enter a name for this connection (e.g., "Netezza Source").
+Server Name: Input the hostname or IP address of your Netezza server.
+Port: Default is 5480; modify if your setup differs.
+Database Name: Specify the name of the database you wish to connect to.
+User Name: Enter your Netezza username.
+Password: Enter your Netezza password.
+Test and Save Connection:
+
+Click Test Connection to verify connectivity.
+If successful, click OK to save the connection.
+4. Connect to the Target Database (Amazon Athena)
+Add Target Connection:
+
+In the Project Tree, right-click on Target and select Add Target.
+A connection dialog will open.
+Configure Connection Settings:
+
+Database Engine: Select Amazon Athena.
+Connection Name: Enter a name for this connection (e.g., "Athena Target").
+AWS Region: Choose the region where your Athena instance is located.
+Output S3 Folder: Specify the S3 bucket and folder for query results (e.g., s3://my-athena-results/).
+Workgroup: Enter the Athena workgroup name (default is primary).
+Test and Save Connection:
+
+Click Test Connection to verify connectivity.
+If successful, click OK to save the connection.
+5. Analyze and Convert the Schema
+Retrieve Source Schema:
+
+In the Project Tree, expand the Netezza Source connection to view available schemas.
+Select the schema you intend to migrate.
+Create an Assessment Report:
+
+Right-click on the selected schema and choose Create Report.
+AWS SCT will analyze the schema and generate a report highlighting:
+Objects that can be automatically converted.
+Objects requiring manual intervention.
+Review the Assessment Report:
+
+Navigate to the Assessment Report tab in the Main Workspace.
+Examine the findings to understand potential challenges in the migration process.
+Convert the Schema:
+
+Right-click on the schema and select Convert Schema.
+AWS SCT will attempt to convert the source schema to be compatible with Amazon Athena.
+The converted schema will appear under the Athena Target in the Project Tree.
+6. Apply the Converted Schema to Amazon Athena
+Save the Converted Schema:
+
+Right-click on the converted schema under Athena Target and select Save as SQL.
+Choose a location on your local machine to save the SQL file.
+Deploy the Schema in Athena:
+
+Open the Amazon Athena console in your web browser.
