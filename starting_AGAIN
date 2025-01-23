@@ -1,102 +1,100 @@
-import jaydebeapi
-from openpyxl import load_workbook, Workbook
-import os
+import re
 
-# Path to the Netezza JDBC driver JAR file
-jdbc_driver_path = '/path/to/nzjdbc.jar'  # Replace with your actual path to nzjdbc.jar
+def convert_netezza_to_athena(netezza_query):
+    """
+    Converts a Netezza SQL query into an Athena-compatible SQL query.
 
-# Database connection details
-url = 'jdbc:netezza://your_server_url:5480/your_database'  # Replace with your server URL and database name
-driver_class = 'org.netezza.Driver'
+    :param netezza_query: str, the input SQL query written in Netezza syntax
+    :return: str, the converted SQL query for Athena
+    """
+    # Define a mapping of Netezza functions to Athena equivalents
+    replacements = {
+        # Null handling
+        r"\bNVL\((.*?),\s*(.*?)\)": r"COALESCE(\1, \2)",
 
-# Read credentials from a text file
-def read_credentials(file_path):
-    credentials = {}
-    with open(file_path, 'r') as file:
-        for line in file:
-            key, value = line.strip().split('=')
-            credentials[key] = value
-    return credentials
+        # String functions
+        r"\bSUBSTR\((.*?),\s*(\d+),\s*(\d+)\)": r"SUBSTRING(\1, \2, \3)",
+        r"\bLENGTH\((.*?)\)": r"LENGTH(\1)",
+        r"\bLPAD\((.*?),\s*(\d+),\s*(.*?)\)": r"LPAD(\1, \2, \3)",
+        r"\bRPAD\((.*?),\s*(\d+),\s*(.*?)\)": r"RPAD(\1, \2, \3)",
 
-# Read username and password
-credentials_file = 'credentials.txt'
-credentials = read_credentials(credentials_file)
-username = credentials.get('username')
-password = credentials.get('password')
+        # Date and time functions
+        r"\bTO_DATE\((.*?),\s*'(.*?)'\)": r"DATE_PARSE(\1, '\2')",
+        r"\bTO_CHAR\((.*?),\s*'(.*?)'\)": r"DATE_FORMAT(\1, '\2')",
+        r"\bDATE_PART\((.*?),\s*(.*?)\)": r"EXTRACT(\1 FROM \2)",
+        r"\bDATE_TRUNC\((.*?),\s*(.*?)\)": r"DATE_TRUNC(\1, \2)",
 
-# Load the Excel file and specify the sheet name
-excel_file = r'path_to_your_excel_file.xlsx'  # Replace with your file path
-workbook = load_workbook(excel_file)
-sheet_name = 'your_sheet_name'  # Replace with the actual sheet name
-sheet = workbook[sheet_name]  # Load the specific sheet by name
+        # Conditional functions
+        r"\bDECODE\((.*?),\s*(.*?),\s*(.*?),\s*(.*?)\)": r"CASE WHEN \1 = \2 THEN \3 ELSE \4 END",
 
-# Path to output text file
-output_file = 'output_file.txt'
+        # Mathematical functions
+        r"\bMOD\((.*?),\s*(.*?)\)": r"MOD(\1, \2)",
+        r"\bABS\((.*?)\)": r"ABS(\1)",
+        r"\bCEIL\((.*?)\)": r"CEIL(\1)",
+        r"\bFLOOR\((.*?)\)": r"FLOOR(\1)",
+        r"\bROUND\((.*?),\s*(\d+)\)": r"ROUND(\1, \2)",
+        r"\bLOG\((.*?)\)": r"LOG(\1)",
+        r"\bEXP\((.*?)\)": r"EXP(\1)",
 
-# Clear the text file if it already exists
-if os.path.exists(output_file):
-    os.remove(output_file)
+        # Window functions
+        r"\bROW_NUMBER\(\)\s+OVER\((.*?)\)": r"ROW_NUMBER() OVER(\1)",
+        r"\bRANK\(\)\s+OVER\((.*?)\)": r"RANK() OVER(\1)",
+        r"\bDENSE_RANK\(\)\s+OVER\((.*?)\)": r"DENSE_RANK() OVER(\1)",
+        r"\bLAG\((.*?)\)\s+OVER\((.*?)\)": r"LAG(\1) OVER(\2)",
+        r"\bLEAD\((.*?)\)\s+OVER\((.*?)\)": r"LEAD(\1) OVER(\2)",
 
-# Create a new Excel workbook to store query results
-result_workbook = Workbook()
-result_sheet = result_workbook.active
-result_sheet.title = 'Query_Results'
-result_sheet.append(['ID', 'Column1', 'Column2', 'Column3'])  # Adjust column names as needed
+        # Statistical functions
+        r"\bSTDDEV\((.*?)\)": r"STDDEV_SAMP(\1)",
+        r"\bCORR\((.*?),\s*(.*?)\)": r"CORR(\1, \2)",
+        r"\bVARIANCE\((.*?)\)": r"VAR_SAMP(\1)",
 
-# Function to execute a sample SQL query
-def execute_sql_query(conn, id_value):
-    try:
-        # Sample SQL query (modify as needed)
-        query = f"SELECT column1, column2, column3 FROM your_table WHERE id_column = '{id_value}'"
-        cursor = conn.cursor()
-        cursor.execute(query)
-        
-        # Fetch results
-        results = cursor.fetchall()
+        # Miscellaneous functions
+        r"\bTRIM\((.*?)\)": r"TRIM(\1)",
+        r"\bLTRIM\((.*?)\)": r"LTRIM(\1)",
+        r"\bRTRIM\((.*?)\)": r"RTRIM(\1)",
+        r"\bPOSITION\((.*?),\s*(.*?)\)": r"POSITION(\2 IN \1)",
+        r"\bUPPER\((.*?)\)": r"UPPER(\1)",
+        r"\bLOWER\((.*?)\)": r"LOWER(\1)",
+        r"\bREPLACE\((.*?),\s*(.*?),\s*(.*?)\)": r"REPLACE(\1, \2, \3)",
+        r"\bCHR\((.*?)\)": r"CHR(\1)",
+        r"\bSIGN\((.*?)\)": r"SIGN(\1)",
+        r"\bLEAST\((.*?)\)": r"LEAST(\1)",
+        r"\bGREATEST\((.*?)\)": r"GREATEST(\1)",
 
-        # If results are found, return them
-        if results:
-            print(f"Query executed successfully for ID: {id_value}")
-            return results
-        else:
-            print(f"No results found for ID: {id_value}")
-            return None
-    except Exception as e:
-        print(f"Failed to execute query for ID {id_value}: {e}")
-        return None
+        # Array functions
+        r"\bARRAY_SPLIT\((.*?),\s*(.*?)\)": r"SPLIT(\1, \2)",
 
-# Test connection to Netezza and process IDs from Excel
-try:
-    # Establish a connection using the JDBC driver
-    conn = jaydebeapi.connect(driver_class, url, [username, password], jdbc_driver_path)
-    print("Connection to Netezza database was successful.")
-    
-    # Loop through each row in the sheet, get IDs, execute SQL, and write to file
-    with open(output_file, 'a') as file:
-        for row in sheet.iter_rows(min_row=2, values_only=True):  # Assuming first row is headers
-            id_value = row[0]  # Adjust the column index if necessary
-            if id_value:  # Ensure the value is not None or empty
-                # Step 1: Read the ID
-                print(f"Processing ID: {id_value}")
+        # Regular expression functions
+        r"\bREGEXP_EXTRACT\((.*?),\s*'(.*?)'\)": r"REGEXP_EXTRACT(\1, '\2')",
+        r"\bREGEXP_REPLACE\((.*?),\s*'(.*?)',\s*'(.*?)'\)": r"REGEXP_REPLACE(\1, '\2', '\3')",
 
-                # Step 2: Execute the SQL query
-                results = execute_sql_query(conn, id_value)
+        # Conversion functions
+        r"\bCAST\((.*?),\s*'(.*?)'\)": r"CAST(\1 AS \2)",
+        r"\bTO_NUMBER\((.*?)\)": r"CAST(\1 AS DECIMAL)",
+        r"\bTO_CHAR\((.*?)\)": r"CAST(\1 AS VARCHAR)",
+    }
 
-                # Step 3: If results are found, write them to the new Excel file
-                if results:
-                    for result_row in results:
-                        result_sheet.append([id_value] + list(result_row))
+    # Apply replacements
+    athena_query = netezza_query
+    for pattern, replacement in replacements.items():
+        athena_query = re.sub(pattern, replacement, athena_query, flags=re.IGNORECASE)
 
-                    # Step 4: Write the ID to the text file if the query succeeds
-                    file.write(f"{id_value}\n")
-                    file.flush()  # Ensure immediate write
-                    print(f"ID {id_value} written to file.\n")
-    
-    # Save the new Excel file with query results
-    result_workbook.save('query_results.xlsx')
-    print("Query results saved to 'query_results.xlsx'.")
+    return athena_query
 
-    # Close the database connection
-    conn.close()
-except Exception as e:
-    print(f"Failed to connect to the Netezza database: {e}")
+# Example usage
+netezza_query = """
+SELECT NVL(employee_name, 'Unknown') AS employee_name,
+       SUBSTR(department_name, 1, 10) AS short_department_name,
+       TO_DATE(hire_date, 'YYYY-MM-DD') AS formatted_hire_date,
+       DECODE(employee_status, 'A', 'Active', 'Inactive') AS status_label,
+       ROUND(salary, 2) AS rounded_salary,
+       MOD(department_id, 3) AS mod_department_id,
+       LENGTH(employee_id) AS id_length,
+       LPAD(employee_name, 20, ' ') AS padded_name
+FROM employees
+WHERE LENGTH(department_name) > 5;
+"""
+
+athena_query = convert_netezza_to_athena(netezza_query)
+print("Converted Athena Query:\n")
+print(athena_query)
